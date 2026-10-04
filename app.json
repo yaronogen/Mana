@@ -9,18 +9,21 @@
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "app.mana.recipes",
+      "supportsTablet": false,
+      "bundleIdentifier": "com.yaronogen.mana",
       "infoPlist": {
         "CFBundleLocalizations": [
           "en",
           "de",
           "he"
         ]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "app.mana.recipes",
+      "package": "com.yaronogen.mana",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1C412B"
