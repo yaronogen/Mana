@@ -28,7 +28,10 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1C412B"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -59,6 +62,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5a4f8c11-d19d-470d-a0e9-fce269e194ca"
+      }
+    },
+    "owner": "yaronogen"
   }
 }
