@@ -1,0 +1,102 @@
+MANA - YOUR RECIPES, BEAUTIFULLY ORGANIZED
+==========================================
+
+What it is
+----------
+Mana is a personal cookbook app for iPhone and Android. It collects the recipes
+you find anywhere - on websites, in messages, in notes, or in your head - and
+turns them into one clean, consistent cookbook in your own language.
+
+The app is available in English, German and Hebrew (with full right-to-left
+layout for Hebrew).
+
+
+Main features
+-------------
+1. Import a recipe from a web link
+   Paste the link to a recipe page. Mana reads only the recipe from the page -
+   title, servings, times, ingredients and preparation steps - and leaves out
+   ads, stories and comments. If the recipe is in another language, it is
+   translated into yours; if it is already in your language, it is imported
+   instantly without any AI processing.
+
+2. Import pasted recipe text
+   Copy recipe text from anywhere and paste it. Mana recognises the
+   ingredients and steps, cleans them up and translates them if needed.
+
+3. Faithful translation
+   Quantities, units, temperatures, times and the source are kept exactly as
+   written. Nothing is invented: if information is missing or unclear, Mana
+   shows a "Please check these details" note instead of guessing.
+
+4. Review before saving
+   Every imported recipe opens in an editable review screen. You can fix the
+   title, servings, times, ingredients and steps, reorder them, and choose a
+   category and tags before saving.
+
+5. Write your own recipes
+   Add family recipes or favourites from memory with the built-in editor.
+
+6. Organised cookbook
+   Thirteen categories (starters, soups, salads, main courses, side dishes,
+   pasta & rice, breakfast, baking, desserts, snacks, sauces & dips, drinks,
+   other), tags, a "recently added" shelf and fast search.
+
+7. Favourites
+   Mark the recipes you love and find them in their own tab.
+
+8. Share
+   Send any recipe as nicely formatted text through the phone's share menu.
+
+9. Private by design
+   Your cookbook is stored on your phone and works offline. Only the link or
+   text you choose to import is sent to the recipe service; your cookbook is
+   never uploaded. No registration is required.
+
+10. Recipe photos
+    Link imports keep the photo from the recipe website, and you can take a
+    photo of the dish you made (or choose one from your library) for any recipe.
+
+11. Light and dark mode.
+
+
+How it works (in short)
+-----------------------
+- The app stores recipes locally on the device.
+- Imports go to a secure Mana server function, which reads the recipe page and,
+  when translation is needed, uses Claude (by Anthropic) to structure and
+  translate only the recipe content.
+- Each person can make up to 30 imports per day.
+
+
+Screenshots
+-----------
+new-design/  - the current design (use these)
+old-design/  - the first version of the app, kept for comparison
+
+new-design/
+01-welcome.png                  First launch - welcome screen with photo
+02-choose-language.png          Choosing English, German or Hebrew
+03-intro.png                    "Find it. Save it. Cook it."
+04-home-empty.png               Home screen of a new cookbook
+05-add-recipe.png               Two ways to add: paste or write
+06-paste-recipe.png             Paste screen
+07-link-detected.png            A recipe link is recognised
+08-preparing.png                Progress while Mana prepares the recipe
+09-review-recipe.png            Hebrew recipe from mako.co.il, translated to English
+09b-review-with-photo.png       A photo of the dish added in the review screen
+09c-review-full.png             Full review screen
+10-recipe-details.png           The saved recipe with its photo
+10b-recipe-details-full.png     Full recipe page
+11-home-with-recipe.png         Home with the new recipe
+12-recipes-list.png             All recipes with photo thumbnails and favourites
+13-favorites.png                Favourites tab
+14-settings.png                 Settings: language and appearance
+15-write-recipe.png             Writing a recipe by hand, with a photo section
+16-home-hebrew.png              The app in Hebrew (right-to-left)
+17-recipes-hebrew.png           Recipes list in Hebrew
+
+Screenshots were taken from the web version of the app at phone size
+(390 x 844). On a real phone the screens look the same, with the phone's own
+status bar. Photos chosen in the web version do not survive a page reload, so
+some later screenshots show the placeholder instead of the dish photo.

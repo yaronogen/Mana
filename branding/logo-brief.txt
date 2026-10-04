@@ -1,0 +1,42 @@
+LOGO BRIEF: "mana." (recipe app)
+
+Please design a logo and app icon for my mobile app, Mana.
+
+WHAT THE APP IS
+Mana is a personal cookbook app for iPhone and Android. You paste a link to any recipe website (or the recipe text), and Mana reads only the recipe (ingredients, steps, times and the photo), translates it into your language if needed, and saves it as a clean, beautiful recipe in your own cookbook. You can also write family recipes by hand and add a photo of the dish you made. Mana gets to know you: it greets you by name, suggests what to cook based on the time of day (breakfast, lunch, dinner), remembers what you cooked and how you rated it, and warns you about ingredients you avoid. Recipes can be shared with friends and family who also use Mana.
+
+The app works in English, German and Hebrew, so the logo must not rely on words or letters from one language. The icon should be a symbol only.
+
+SLOGAN
+"Where your recipes feel at home"
+
+BRAND PERSONALITY
+Warm, homey, calm and modern, like a well-loved family kitchen table. Personal and trustworthy, not "techy". Simple and elegant rather than playful or cartoonish. It should feel like home cooking, gathering together and keeping recipes that matter.
+
+EXISTING BRAND ELEMENTS (please keep and build on these)
+- Wordmark: lowercase "mana" in a heavy, rounded sans-serif, followed by an orange dot: "mana."
+- The orange dot is the signature detail; it could become part of the symbol (for example a dot on a plate, a spoon, a pot lid handle or a steam drop).
+- Colors:
+  - Forest green #385943 (primary)
+  - Warm orange #D87B4D (accent, the dot)
+  - Cream #F7F4ED (background)
+  - Soft sage #E4EBDD (light green tint)
+  - Near-black #121714 (dark-mode background)
+- The app currently uses a simple eight-spoked asterisk (✳) as a placeholder symbol. It can be refined or replaced.
+
+IDEAS TO EXPLORE (optional)
+- A simple bowl or plate with a small rising steam curl and the orange dot
+- A house shape combined with a pot or bowl ("recipes feel at home")
+- An open recipe card or book forming a roof or home
+- An abstract "m" built from a bowl or a spoon
+Avoid clichés: no chef hat, no crossed fork and knife, no cartoon food.
+
+TECHNICAL REQUIREMENTS
+- App icon: square 1024 × 1024 px, symbol only (no text), centered with generous padding. It must also work inside a circle (Android adaptive icon crops to a circle).
+- Must be recognizable at small sizes (48 px): bold, simple shapes, at most 2–3 colors, no fine details or gradients.
+- Provide two icon versions: (1) forest-green symbol on a cream background, (2) cream or orange symbol on a forest-green background.
+- Provide a single-color (monochrome) version of the symbol for Android themed icons and notifications.
+- Provide the full horizontal logo: symbol + the "mana." wordmark, on light and on dark backgrounds.
+- Flat vector style, clean edges, suitable for converting to SVG.
+
+Please show 3–4 different concepts first so I can choose a direction.

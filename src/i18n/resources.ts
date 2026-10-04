@@ -1,0 +1,190 @@
+import type { AppLanguage, RecipeCategory } from '../domain/recipe';
+
+type Messages = {
+  welcomeTitle: string; welcomeSubtitle: string; welcomeBody: string; continue: string;
+  chooseLanguage: string; demoTitle: string; demoBody: string; startCooking: string;
+  home: string; recipes: string; favorites: string; settings: string; search: string;
+  recentlyAdded: string; myCookbook: string; seeAll: string; addRecipe: string;
+  emptyRecipes: string; emptyFavorites: string; noRecipesFound: string;
+  addTitle: string; pasteRecipe: string; writeRecipe: string; pasteHint: string;
+  createRecipe: string; preparing: string; reviewRecipe: string; saveRecipe: string;
+  title: string; description: string; servings: string; prepTime: string; cookTime: string;
+  ingredients: string; preparation: string; category: string; tags: string; notes: string;
+  addIngredient: string; addStep: string; ingredientPlaceholder: string; stepPlaceholder: string;
+  cancel: string; save: string; edit: string; delete: string; share: string; source: string;
+  minutes: string; language: string; appearance: string; system: string; light: string; dark: string;
+  appearanceLabel: string; deleteConfirm: string; deleteRecipe: string;
+  importFailed: string; importHelp: string; pasteFirst: string; importUnavailable: string;
+  retry: string; favorite: string; optional: string; other: string;
+  tagline: string; homeHeadline: string; littleAtATime: string; firstRecipeHint: string;
+  findByMood: string; recipesCount: string; footerNote: string; cookbookLabel: string; keepsakesLabel: string;
+  languageIntro: string; findIt: string; saveIt: string; cookIt: string; rtlNote: string; version: string;
+  missingDetailsTitle: string; missingDetailsBody: string; saveFailedTitle: string; saveFailedBody: string;
+  recipeTitlePlaceholder: string; descriptionPlaceholder: string; moveUp: string; moveDown: string; remove: string;
+  tagsHint: string; notesHint: string; checkDetails: string; loadFailedTitle: string; loadFailedBody: string;
+  textTooLong: string; networkImportFailed: string; processingNote: string; pasteScreenTitle: string; pastePlaceholder: string;
+  totalTime: string; loadingRecipe: string; addIntro: string; pasteCardBody: string; writeCardBody: string;
+  privateByDesign: string; localRecipesNote: string;
+  importLimit: string; linkDetected: string; readingPageNote: string; pageUnavailable: string;
+  settingsKicker: string; myRecipe: string; minuteAbbrev: string; servingsAbbrev: string; recipeCardFallback: string;
+  duplicateTitle: string; duplicateBody: string; saveAnyway: string;
+  recipeNotFound: string;
+  getStarted: string; welcomeFeature1: string; welcomeFeature2: string; welcomeFeature3: string; hebrewName: string; findItBody: string; saveItBody: string; cookItBody: string; browseCategories: string; pasteInfo: string; linkDetectedTitle: string; stepReadingPage: string; stepReadingText: string; stepExtracting: string; stepCleaning: string; stepTranslating: string; all: string; photo: string; addPhoto: string; addPhotoHint: string; takePhoto: string; choosePhoto: string; changePhoto: string; removePhoto: string; textSize: string; slogan: string; goodNight: string; mealBreakfast: string; mealLunch: string; mealAfternoon: string; mealDinner: string; mealLateNight: string; howAbout: string; anotherIdea: string; noMealMatch: string; aboutYouTitle: string; aboutYouIntro: string; yourName: string; namePlaceholder: string; householdSize: string; dietsLabel: string; allergiesLabel: string; cuisinesLabel: string; skip: string; myProfile: string; profileHint: string; dietVegetarian: string; dietVegan: string; dietGlutenFree: string; dietDairyFree: string; dietKosher: string; allergenNuts: string; allergenPeanuts: string; allergenGluten: string; allergenDairy: string; allergenEggs: string; allergenFish: string; allergenShellfish: string; allergenSesame: string; allergenSoy: string; conflictMeat: string; conflictPork: string; conflictHoney: string; conflictMeatAndDairy: string; cuisineItalian: string; cuisineMediterranean: string; cuisineMiddleEastern: string; cuisineAsian: string; cuisineMexican: string; cuisineFrench: string; cuisineIndian: string; cuisineHomestyle: string; headsUp: string; headsUpContains: string; iCookedThis: string; howDidItGo: string; yourRating: string; cookNotePlaceholder: string; cookedOnce: string; cookedTimes: string; lastCooked: string; yourNotes: string; whenToday: string; whenYesterday: string; whenDays: string; whenWeek: string; whenWeeks: string; whenMonth: string; whenMonths: string; dislikesLabel: string; dislikesPlaceholder: string; importHeadsUpTitle: string; importHeadsUpBody: string; reviewAnyway: string; planAndBilling: string; planFree: string; planPremium: string; currentPlan: string; currentBadge: string; importsUsed: string; importsLeft: string; resetsOn: string; usageUnavailable: string; whatCounts: string; freeFeature1: string; freeFeature2: string; freeFeature3: string; premiumFeature1: string; premiumFeature2: string; premiumFeature3: string; monthly: string; yearly: string; perMonth: string; perYear: string; yearlySave: string; upgrade: string; restorePurchases: string; seePlans: string; purchaseSoonTitle: string; purchaseSoonBody: string; subscriptionTerms: string; goodMorning: string; goodAfternoon: string; goodEvening: string;
+};
+
+export const resources: Record<AppLanguage, Messages> = {
+  en: {
+    welcomeTitle: 'Welcome to Mana', welcomeSubtitle: 'Your recipes, beautifully organized.',
+    welcomeBody: 'Save recipes from anywhere and turn them into a clean personal cookbook.',
+    continue: 'Continue', chooseLanguage: 'Choose your language', demoTitle: 'Find it. Save it. Cook it.',
+    demoBody: 'Paste a link, import a recipe or write your own. Mana will clean, translate and organize it for you.',
+    startCooking: 'Start cooking', home: 'Home', recipes: 'Recipes', favorites: 'Favorites', settings: 'Settings',
+    search: 'Search my recipes', recentlyAdded: 'Recently added', myCookbook: 'My cookbook', seeAll: 'See all',
+    addRecipe: 'Add recipe', emptyRecipes: 'Your cookbook is waiting for its first recipe.',
+    emptyFavorites: 'Recipes you love will live here.', noRecipesFound: 'No recipes found.',
+    addTitle: 'Add a recipe', pasteRecipe: 'Paste recipe', writeRecipe: 'Write recipe',
+    pasteHint: 'Paste recipe text or a link. Mana will take care of the rest.',
+    createRecipe: 'Create recipe', preparing: 'Preparing your recipe…', reviewRecipe: 'Review recipe',
+    saveRecipe: 'Save recipe', title: 'Title', description: 'Description', servings: 'Servings',
+    prepTime: 'Prep', cookTime: 'Cook', ingredients: 'Ingredients', preparation: 'Preparation',
+    category: 'Category', tags: 'Tags', notes: 'Notes', addIngredient: 'Add ingredient', addStep: 'Add step',
+    ingredientPlaceholder: 'e.g. 200 g ripe tomatoes', stepPlaceholder: 'Describe this step',
+    cancel: 'Cancel', save: 'Save', edit: 'Edit', delete: 'Delete', share: 'Share', source: 'Source',
+    minutes: 'min', language: 'Language', appearance: 'Appearance', system: 'System', light: 'Light', dark: 'Dark',
+    appearanceLabel: 'Choose a theme',
+    deleteConfirm: 'Delete this recipe? This cannot be undone.', deleteRecipe: 'Delete recipe',
+    importFailed: "We couldn't find a recipe in this text.",
+    importHelp: 'Try copying the ingredients and preparation instructions and paste them again.',
+    pasteFirst: 'Paste a recipe first.', importUnavailable: 'Recipe import is not configured yet. You can still write a recipe by hand.',
+    retry: 'Try again', favorite: 'Favorite', optional: 'optional', other: 'Other',
+    tagline: 'Your recipes, beautifully organized', homeHeadline: 'What are we cooking today?',
+    littleAtATime: 'A little inspiration for later', firstRecipeHint: 'Add a recipe you can’t wait to make.',
+    findByMood: 'Find something lovely to make', recipesCount: 'recipes', footerNote: 'Made for the good things around the table.',
+    cookbookLabel: 'MANA · THE COOKBOOK', keepsakesLabel: 'MANA · YOUR KEEPSAKES',
+    languageIntro: 'Your app and saved recipes will use this language.', findIt: 'Find it', saveIt: 'Save it', cookIt: 'Cook it',
+    rtlNote: 'Hebrew uses a right-to-left layout. Some native navigation details may apply after restarting Mana.', version: 'Version',
+    missingDetailsTitle: 'A few details are missing', missingDetailsBody: 'Add a title, at least one ingredient, and one preparation step.',
+    saveFailedTitle: 'Could not save recipe', saveFailedBody: 'Your recipe is still here. Please try again.',
+    recipeTitlePlaceholder: 'Give this recipe a name', descriptionPlaceholder: 'A short note about this dish',
+    moveUp: 'Move up', moveDown: 'Move down', remove: 'Remove', tagsHint: 'Separate tags with commas', notesHint: 'One note per line',
+    checkDetails: 'Please check these details', loadFailedTitle: 'Could not open recipe', loadFailedBody: 'Try again in a moment.',
+    textTooLong: 'This text is too long. Paste up to 30,000 characters.', networkImportFailed: 'Mana could not reach the recipe service. Check your connection and try again.',
+    processingNote: 'We’re finding the recipe details and preparing them for your cookbook.', pasteScreenTitle: 'Bring a recipe along',
+    pastePlaceholder: 'Paste the recipe text or a link to a recipe page…', totalTime: 'Total', loadingRecipe: 'Opening your recipe…',
+    addIntro: 'Save something you found, or write down a favorite from memory.', pasteCardBody: 'Clean up and translate a recipe you found anywhere.',
+    writeCardBody: 'Start with a blank page and make it yours.', privateByDesign: 'Your cookbook stays on this device',
+    localRecipesNote: 'Saved recipes are stored locally. Only the link or text you submit is sent to the recipe service.',
+    importLimit: 'You’ve used all your imports for this month. Upgrade to Premium for 50 imports a month, or write recipes yourself for free.',
+    linkDetected: 'Mana will read only the ingredients and method from this page, and translate them if needed.',
+    readingPageNote: 'We’re reading the recipe from the page and preparing it for your cookbook.',
+    pageUnavailable: 'We couldn’t open this page. Check the link, or copy the recipe text from the page and paste it instead.',
+    settingsKicker: 'MANA · YOUR TABLE, YOUR WAY', myRecipe: 'My Recipe', minuteAbbrev: 'min', servingsAbbrev: 'servings', recipeCardFallback: 'Mana recipe',
+    duplicateTitle: 'This recipe may already be saved', duplicateBody: 'A recipe with this title is already in your cookbook. Save another copy anyway?', saveAnyway: 'Save another copy',
+    recipeNotFound: 'This recipe could not be found on this device.',
+    getStarted: 'Get started', welcomeFeature1: 'Save recipes from anywhere', welcomeFeature2: 'Clean and translate automatically', welcomeFeature3: 'Keep everything in one place', hebrewName: 'Hebrew', findItBody: 'Any website or text', saveItBody: 'In your personal cookbook', cookItBody: 'Enjoy your meals', browseCategories: 'Browse categories', pasteInfo: 'Mana will read only the recipe from the page, and translate it if needed.', linkDetectedTitle: 'Recipe link detected', stepReadingPage: 'Reading the page', stepReadingText: 'Reading your text', stepExtracting: 'Extracting recipe content', stepCleaning: 'Cleaning and organizing', stepTranslating: 'Translating (if needed)', all: 'All', photo: 'Photo', addPhoto: 'Add a photo', addPhotoHint: 'Keep the photo from the website, or take one of the dish you made.', takePhoto: 'Take photo', choosePhoto: 'Choose photo', changePhoto: 'Change photo', removePhoto: 'Remove photo', textSize: 'Text size', slogan: 'Where your recipes feel at home', goodNight: 'Good night', mealBreakfast: 'Breakfast time', mealLunch: 'Lunch time', mealAfternoon: 'Afternoon treat', mealDinner: 'Dinner time', mealLateNight: 'Late-night bite', howAbout: 'How about…', anotherIdea: 'Another idea', noMealMatch: 'Nothing in your cookbook fits this time yet, so here is something else you saved.', aboutYouTitle: 'A little about you', aboutYouIntro: 'Mana uses this to greet you, suggest recipes you will love and warn you about ingredients you avoid. It stays on this phone.', yourName: 'Your name', namePlaceholder: 'What should Mana call you?', householdSize: 'Cooking for', dietsLabel: 'Diet', allergiesLabel: 'Allergies and ingredients you avoid', cuisinesLabel: 'Favorite cuisines', skip: 'Skip for now', myProfile: 'My profile', profileHint: 'Name, household, diet and allergies', dietVegetarian: 'Vegetarian', dietVegan: 'Vegan', dietGlutenFree: 'Gluten-free', dietDairyFree: 'Dairy-free', dietKosher: 'Kosher', allergenNuts: 'Nuts', allergenPeanuts: 'Peanuts', allergenGluten: 'Gluten', allergenDairy: 'Dairy', allergenEggs: 'Eggs', allergenFish: 'Fish', allergenShellfish: 'Shellfish', allergenSesame: 'Sesame', allergenSoy: 'Soy', conflictMeat: 'Meat', conflictPork: 'Pork', conflictHoney: 'Honey', conflictMeatAndDairy: 'Meat with dairy', cuisineItalian: 'Italian', cuisineMediterranean: 'Mediterranean', cuisineMiddleEastern: 'Middle Eastern', cuisineAsian: 'Asian', cuisineMexican: 'Mexican', cuisineFrench: 'French', cuisineIndian: 'Indian', cuisineHomestyle: 'Home-style', headsUp: 'Heads-up for you', headsUpContains: 'Contains: {{items}}', iCookedThis: 'I cooked this', howDidItGo: 'How did it turn out?', yourRating: 'Your rating', cookNotePlaceholder: 'A note for next time, e.g. a little less salt', cookedOnce: 'Cooked once', cookedTimes: 'Cooked {{n}} times', lastCooked: 'last time {{when}}', yourNotes: 'Your notes', whenToday: 'today', whenYesterday: 'yesterday', whenDays: '{{n}} days ago', whenWeek: 'a week ago', whenWeeks: '{{n}} weeks ago', whenMonth: 'a month ago', whenMonths: '{{n}} months ago', dislikesLabel: 'Ingredients I don’t like', dislikesPlaceholder: 'e.g. cilantro, olives, mushrooms', importHeadsUpTitle: 'Heads-up before you save', importHeadsUpBody: 'This recipe contains {{items}}, which you marked to avoid. Do you still want to review it?', reviewAnyway: 'Review anyway', planAndBilling: 'Plan & billing', planFree: 'Free', planPremium: 'Premium', currentPlan: 'Your plan', currentBadge: 'Current plan', importsUsed: '{{used}} of {{limit}} imports used this month', importsLeft: '{{left}} of {{limit}} imports left this month', resetsOn: 'Resets on {{date}}', usageUnavailable: 'Your usage will appear here when you are online.', whatCounts: 'Each recipe you import from a link or pasted text counts as one import. Writing recipes yourself is always free and unlimited.', freeFeature1: '3 imports a month from links or text', freeFeature2: 'Unlimited recipes you write yourself', freeFeature3: 'Photos, favorites, profile and meal suggestions', premiumFeature1: '50 imports a month from links or text', premiumFeature2: 'Translation into your language included', premiumFeature3: 'Everything in Free', monthly: 'Monthly', yearly: 'Yearly', perMonth: 'per month', perYear: 'per year', yearlySave: 'Save 33%', upgrade: 'Upgrade to Premium', restorePurchases: 'Restore purchases', seePlans: 'See plans', purchaseSoonTitle: 'Available in the App Store version', purchaseSoonBody: 'Subscriptions are purchased securely through the App Store. Upgrading will be available in the released app.', subscriptionTerms: 'Payment is charged to your Apple ID account when you confirm the purchase. The subscription renews automatically unless it is cancelled at least 24 hours before the end of the current period. You can manage or cancel it in your App Store account settings.', goodMorning: 'Good morning', goodAfternoon: 'Good afternoon', goodEvening: 'Good evening',
+  },
+  de: {
+    welcomeTitle: 'Willkommen bei Mana', welcomeSubtitle: 'Deine Rezepte, wunderschön organisiert.',
+    welcomeBody: 'Speichere Rezepte von überall und mach daraus dein persönliches Kochbuch.',
+    continue: 'Weiter', chooseLanguage: 'Wähle deine Sprache', demoTitle: 'Finden. Speichern. Kochen.',
+    demoBody: 'Füge einen Link ein, importiere ein Rezept oder schreibe dein eigenes. Mana bereinigt, übersetzt und organisiert es für dich.',
+    startCooking: 'Los geht’s', home: 'Start', recipes: 'Rezepte', favorites: 'Favoriten', settings: 'Einstellungen',
+    search: 'Rezepte durchsuchen', recentlyAdded: 'Zuletzt hinzugefügt', myCookbook: 'Mein Kochbuch', seeAll: 'Alle',
+    addRecipe: 'Rezept hinzufügen', emptyRecipes: 'Dein Kochbuch wartet auf das erste Rezept.',
+    emptyFavorites: 'Hier findest du deine Lieblingsrezepte.', noRecipesFound: 'Keine Rezepte gefunden.',
+    addTitle: 'Rezept hinzufügen', pasteRecipe: 'Rezept einfügen', writeRecipe: 'Rezept schreiben',
+    pasteHint: 'Füge Rezepttext oder einen Link ein. Mana kümmert sich um den Rest.', createRecipe: 'Rezept erstellen',
+    preparing: 'Dein Rezept wird vorbereitet…', reviewRecipe: 'Rezept prüfen', saveRecipe: 'Rezept speichern',
+    title: 'Titel', description: 'Beschreibung', servings: 'Portionen', prepTime: 'Vorbereitung', cookTime: 'Garzeit',
+    ingredients: 'Zutaten', preparation: 'Zubereitung', category: 'Kategorie', tags: 'Stichwörter', notes: 'Notizen',
+    addIngredient: 'Zutat hinzufügen', addStep: 'Schritt hinzufügen', ingredientPlaceholder: 'z. B. 200 g reife Tomaten',
+    stepPlaceholder: 'Schritt beschreiben', cancel: 'Abbrechen', save: 'Speichern', edit: 'Bearbeiten',
+    delete: 'Löschen', share: 'Teilen', source: 'Quelle', minutes: 'Min.', language: 'Sprache', appearance: 'Darstellung',
+    system: 'System', light: 'Hell', dark: 'Dunkel', appearanceLabel: 'Design wählen',
+    deleteConfirm: 'Dieses Rezept löschen? Das kann nicht rückgängig gemacht werden.', deleteRecipe: 'Rezept löschen',
+    importFailed: 'In diesem Text konnten wir kein Rezept finden.',
+    importHelp: 'Kopiere Zutaten und Zubereitung und füge sie erneut ein.', pasteFirst: 'Füge zuerst ein Rezept ein.',
+    importUnavailable: 'Der Rezeptimport ist noch nicht konfiguriert. Du kannst das Rezept von Hand schreiben.',
+    retry: 'Erneut versuchen', favorite: 'Favorit', optional: 'optional', other: 'Sonstiges',
+    tagline: 'Deine Rezepte, wunderschön organisiert', homeHeadline: 'Was kochen wir heute?',
+    littleAtATime: 'Ein bisschen Inspiration für später', firstRecipeHint: 'Füge ein Rezept hinzu, das du ausprobieren möchtest.',
+    findByMood: 'Finde etwas Leckeres', recipesCount: 'Rezepte', footerNote: 'Für die schönen Momente am Tisch.',
+    cookbookLabel: 'MANA · MEIN KOCHBUCH', keepsakesLabel: 'MANA · MEINE LIEBLINGSREZEPTE',
+    languageIntro: 'Die App und gespeicherte Rezepte verwenden diese Sprache.', findIt: 'Finden', saveIt: 'Speichern', cookIt: 'Kochen',
+    rtlNote: 'Hebräisch wird von rechts nach links angezeigt. Einige native Navigationselemente werden nach einem Neustart übernommen.', version: 'Version',
+    missingDetailsTitle: 'Es fehlen noch ein paar Angaben', missingDetailsBody: 'Bitte gib einen Titel, mindestens eine Zutat und einen Zubereitungsschritt ein.',
+    saveFailedTitle: 'Rezept konnte nicht gespeichert werden', saveFailedBody: 'Dein Rezept ist noch da. Bitte versuche es erneut.',
+    recipeTitlePlaceholder: 'Wie heißt dein Rezept?', descriptionPlaceholder: 'Eine kurze Beschreibung des Gerichts',
+    moveUp: 'Nach oben', moveDown: 'Nach unten', remove: 'Entfernen', tagsHint: 'Stichwörter mit Komma trennen', notesHint: 'Eine Notiz pro Zeile',
+    checkDetails: 'Bitte prüfe diese Angaben', loadFailedTitle: 'Rezept konnte nicht geöffnet werden', loadFailedBody: 'Versuche es gleich noch einmal.',
+    textTooLong: 'Der Text ist zu lang. Füge höchstens 30.000 Zeichen ein.', networkImportFailed: 'Der Rezeptdienst ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.',
+    processingNote: 'Wir suchen die Rezeptangaben und bereiten sie für dein Kochbuch vor.', pasteScreenTitle: 'Rezept mitnehmen',
+    pastePlaceholder: 'Füge den Rezepttext oder einen Link zur Rezeptseite ein…', totalTime: 'Gesamt', loadingRecipe: 'Rezept wird geöffnet…',
+    addIntro: 'Speichere einen Fund oder schreibe ein Lieblingsrezept aus dem Gedächtnis auf.', pasteCardBody: 'Ein gefundenes Rezept bereinigen und übersetzen.',
+    writeCardBody: 'Beginne mit einer leeren Seite und gestalte dein Rezept.', privateByDesign: 'Dein Kochbuch bleibt auf diesem Gerät',
+    localRecipesNote: 'Gespeicherte Rezepte bleiben lokal. Nur der Link oder Text, den du sendest, wird an den Rezeptdienst übertragen.',
+    importLimit: 'Du hast alle Importe für diesen Monat genutzt. Mit Premium bekommst du 50 Importe pro Monat, oder schreibe Rezepte kostenlos selbst.',
+    linkDetected: 'Mana übernimmt nur Zutaten und Zubereitung von dieser Seite und übersetzt sie bei Bedarf.',
+    readingPageNote: 'Wir lesen das Rezept von der Seite und bereiten es für dein Kochbuch vor.',
+    pageUnavailable: 'Diese Seite konnte nicht geöffnet werden. Prüfe den Link oder kopiere den Rezepttext von der Seite und füge ihn ein.',
+    settingsKicker: 'MANA · DEIN TISCH, DEIN WEG', myRecipe: 'Mein Rezept', minuteAbbrev: 'Min.', servingsAbbrev: 'Portionen', recipeCardFallback: 'Mana-Rezept',
+    duplicateTitle: 'Dieses Rezept ist möglicherweise schon gespeichert', duplicateBody: 'Ein Rezept mit diesem Titel ist bereits im Kochbuch. Trotzdem eine weitere Kopie speichern?', saveAnyway: 'Trotzdem speichern',
+    recipeNotFound: 'Dieses Rezept wurde auf diesem Gerät nicht gefunden.',
+    getStarted: 'Los geht’s', welcomeFeature1: 'Rezepte von überall speichern', welcomeFeature2: 'Automatisch bereinigen und übersetzen', welcomeFeature3: 'Alles an einem Ort', hebrewName: 'Hebräisch', findItBody: 'Jede Website oder jeder Text', saveItBody: 'In deinem persönlichen Kochbuch', cookItBody: 'Guten Appetit', browseCategories: 'Kategorien entdecken', pasteInfo: 'Mana liest nur das Rezept von der Seite und übersetzt es bei Bedarf.', linkDetectedTitle: 'Rezeptlink erkannt', stepReadingPage: 'Seite wird gelesen', stepReadingText: 'Text wird gelesen', stepExtracting: 'Rezeptinhalt wird erkannt', stepCleaning: 'Bereinigen und ordnen', stepTranslating: 'Übersetzen (falls nötig)', all: 'Alle', photo: 'Foto', addPhoto: 'Foto hinzufügen', addPhotoHint: 'Behalte das Foto der Website oder fotografiere dein eigenes Gericht.', takePhoto: 'Foto aufnehmen', choosePhoto: 'Foto auswählen', changePhoto: 'Foto ändern', removePhoto: 'Foto entfernen', textSize: 'Textgröße', slogan: 'Wo deine Rezepte zu Hause sind', goodNight: 'Gute Nacht', mealBreakfast: 'Zeit fürs Frühstück', mealLunch: 'Zeit fürs Mittagessen', mealAfternoon: 'Zeit für etwas Süßes', mealDinner: 'Zeit fürs Abendessen', mealLateNight: 'Ein später Snack', howAbout: 'Wie wäre es mit…', anotherIdea: 'Andere Idee', noMealMatch: 'Für diese Tageszeit hast du noch nichts gespeichert, hier ist etwas anderes aus deinem Kochbuch.', aboutYouTitle: 'Ein bisschen über dich', aboutYouIntro: 'Damit begrüßt dich Mana, schlägt passende Rezepte vor und warnt dich vor Zutaten, die du meidest. Alles bleibt auf diesem Telefon.', yourName: 'Dein Name', namePlaceholder: 'Wie soll Mana dich nennen?', householdSize: 'Ich koche für', dietsLabel: 'Ernährung', allergiesLabel: 'Allergien und Zutaten, die du meidest', cuisinesLabel: 'Lieblingsküchen', skip: 'Später', myProfile: 'Mein Profil', profileHint: 'Name, Haushalt, Ernährung und Allergien', dietVegetarian: 'Vegetarisch', dietVegan: 'Vegan', dietGlutenFree: 'Glutenfrei', dietDairyFree: 'Laktosefrei', dietKosher: 'Koscher', allergenNuts: 'Nüsse', allergenPeanuts: 'Erdnüsse', allergenGluten: 'Gluten', allergenDairy: 'Milchprodukte', allergenEggs: 'Eier', allergenFish: 'Fisch', allergenShellfish: 'Meeresfrüchte', allergenSesame: 'Sesam', allergenSoy: 'Soja', conflictMeat: 'Fleisch', conflictPork: 'Schweinefleisch', conflictHoney: 'Honig', conflictMeatAndDairy: 'Fleisch mit Milch', cuisineItalian: 'Italienisch', cuisineMediterranean: 'Mediterran', cuisineMiddleEastern: 'Orientalisch', cuisineAsian: 'Asiatisch', cuisineMexican: 'Mexikanisch', cuisineFrench: 'Französisch', cuisineIndian: 'Indisch', cuisineHomestyle: 'Hausmannskost', headsUp: 'Hinweis für dich', headsUpContains: 'Enthält: {{items}}', iCookedThis: 'Ich habe es gekocht', howDidItGo: 'Wie ist es geworden?', yourRating: 'Deine Bewertung', cookNotePlaceholder: 'Eine Notiz fürs nächste Mal, z. B. etwas weniger Salz', cookedOnce: 'Einmal gekocht', cookedTimes: '{{n}}-mal gekocht', lastCooked: 'zuletzt {{when}}', yourNotes: 'Deine Notizen', whenToday: 'heute', whenYesterday: 'gestern', whenDays: 'vor {{n}} Tagen', whenWeek: 'vor einer Woche', whenWeeks: 'vor {{n}} Wochen', whenMonth: 'vor einem Monat', whenMonths: 'vor {{n}} Monaten', dislikesLabel: 'Zutaten, die ich nicht mag', dislikesPlaceholder: 'z. B. Koriander, Oliven, Pilze', importHeadsUpTitle: 'Hinweis vor dem Speichern', importHeadsUpBody: 'Dieses Rezept enthält {{items}}, das du meiden möchtest. Trotzdem prüfen?', reviewAnyway: 'Trotzdem prüfen', planAndBilling: 'Abo & Abrechnung', planFree: 'Kostenlos', planPremium: 'Premium', currentPlan: 'Dein Abo', currentBadge: 'Aktuelles Abo', importsUsed: '{{used}} von {{limit}} Importen diesen Monat genutzt', importsLeft: 'Noch {{left}} von {{limit}} Importen diesen Monat', resetsOn: 'Wird am {{date}} zurückgesetzt', usageUnavailable: 'Deine Nutzung erscheint hier, sobald du online bist.', whatCounts: 'Jedes Rezept, das du aus einem Link oder eingefügtem Text importierst, zählt als ein Import. Eigene Rezepte schreiben ist immer kostenlos und unbegrenzt.', freeFeature1: '3 Importe pro Monat aus Links oder Text', freeFeature2: 'Unbegrenzt eigene Rezepte', freeFeature3: 'Fotos, Favoriten, Profil und Essensvorschläge', premiumFeature1: '50 Importe pro Monat aus Links oder Text', premiumFeature2: 'Übersetzung in deine Sprache inklusive', premiumFeature3: 'Alles aus Kostenlos', monthly: 'Monatlich', yearly: 'Jährlich', perMonth: 'pro Monat', perYear: 'pro Jahr', yearlySave: '33 % sparen', upgrade: 'Auf Premium upgraden', restorePurchases: 'Käufe wiederherstellen', seePlans: 'Abos ansehen', purchaseSoonTitle: 'Verfügbar in der App-Store-Version', purchaseSoonBody: 'Abos werden sicher über den App Store gekauft. Das Upgrade ist in der veröffentlichten App verfügbar.', subscriptionTerms: 'Die Zahlung wird bei Bestätigung des Kaufs deinem Apple-ID-Konto belastet. Das Abo verlängert sich automatisch, sofern es nicht mindestens 24 Stunden vor Ende des aktuellen Zeitraums gekündigt wird. Du kannst es in den Einstellungen deines App-Store-Kontos verwalten oder kündigen.', goodMorning: 'Guten Morgen', goodAfternoon: 'Guten Tag', goodEvening: 'Guten Abend',
+  },
+  he: {
+    welcomeTitle: 'ברוכים הבאים ל-Mana', welcomeSubtitle: 'המתכונים שלכם, מאורגנים להפליא.',
+    welcomeBody: 'שמרו מתכונים מכל מקום והפכו אותם לספר הבישול האישי שלכם.',
+    continue: 'המשך', chooseLanguage: 'בחרו שפה', demoTitle: 'מוצאים. שומרים. מבשלים.',
+    demoBody: 'הדביקו קישור, ייבאו מתכון או כתבו משלכם. Mana תסדר, תתרגם ותארגן אותו בשבילכם.', startCooking: 'מתחילים לבשל',
+    home: 'בית', recipes: 'מתכונים', favorites: 'מועדפים', settings: 'הגדרות', search: 'חיפוש במתכונים',
+    recentlyAdded: 'נוספו לאחרונה', myCookbook: 'ספר המתכונים שלי', seeAll: 'הכול', addRecipe: 'הוספת מתכון',
+    emptyRecipes: 'ספר המתכונים מחכה למתכון הראשון שלכם.', emptyFavorites: 'המתכונים שאהבתם יופיעו כאן.',
+    noRecipesFound: 'לא נמצאו מתכונים.', addTitle: 'הוספת מתכון', pasteRecipe: 'הדבקת מתכון',
+    writeRecipe: 'כתיבת מתכון', pasteHint: 'הדביקו טקסט של מתכון או קישור. Mana תדאג לכל השאר.',
+    createRecipe: 'יצירת מתכון', preparing: 'מכינים את המתכון…', reviewRecipe: 'בדיקת המתכון',
+    saveRecipe: 'שמירת מתכון', title: 'שם המתכון', description: 'תיאור', servings: 'מנות', prepTime: 'הכנה',
+    cookTime: 'בישול', ingredients: 'מרכיבים', preparation: 'אופן ההכנה', category: 'קטגוריה', tags: 'תגיות',
+    notes: 'הערות', addIngredient: 'הוספת מרכיב', addStep: 'הוספת שלב',
+    ingredientPlaceholder: 'לדוגמה: 200 גרם עגבניות בשלות', stepPlaceholder: 'תארו את השלב',
+    cancel: 'ביטול', save: 'שמירה', edit: 'עריכה', delete: 'מחיקה', share: 'שיתוף', source: 'מקור',
+    minutes: 'דק׳', language: 'שפה', appearance: 'מראה', system: 'לפי המערכת', light: 'בהיר', dark: 'כהה',
+    appearanceLabel: 'בחירת ערכת נושא',
+    deleteConfirm: 'למחוק את המתכון? אי אפשר לבטל פעולה זו.', deleteRecipe: 'מחיקת מתכון',
+    importFailed: 'לא הצלחנו למצוא מתכון בטקסט הזה.',
+    importHelp: 'נסו להעתיק שוב את המרכיבים ואת הוראות ההכנה.', pasteFirst: 'הדביקו קודם מתכון.',
+    importUnavailable: 'ייבוא מתכונים עדיין לא הוגדר. אפשר לכתוב מתכון באופן ידני.',
+    retry: 'ניסיון נוסף', favorite: 'מועדף', optional: 'אופציונלי', other: 'אחר',
+    tagline: 'המתכונים שלכם, מאורגנים להפליא', homeHeadline: 'מה מבשלים היום?',
+    littleAtATime: 'קצת השראה לפעם הבאה', firstRecipeHint: 'הוסיפו מתכון שמתחשק לכם להכין.',
+    findByMood: 'מצאו משהו טעים להכין', recipesCount: 'מתכונים', footerNote: 'לרגעים הטובים סביב השולחן.',
+    cookbookLabel: 'MANA · ספר המתכונים', keepsakesLabel: 'MANA · המתכונים האהובים',
+    languageIntro: 'השפה הזו תשמש בממשק ובמתכונים שתשמרו.', findIt: 'מוצאים', saveIt: 'שומרים', cookIt: 'מבשלים',
+    rtlNote: 'עברית מוצגת מימין לשמאל. חלק מפרטי הניווט יתעדכנו לאחר הפעלה מחדש של Mana.', version: 'גרסה',
+    missingDetailsTitle: 'חסרים כמה פרטים', missingDetailsBody: 'הוסיפו שם, לפחות מרכיב אחד ושלב הכנה אחד.',
+    saveFailedTitle: 'לא ניתן לשמור את המתכון', saveFailedBody: 'המתכון עדיין כאן. נסו שוב.',
+    recipeTitlePlaceholder: 'תנו שם למתכון', descriptionPlaceholder: 'הערה קצרה על המנה',
+    moveUp: 'העברה למעלה', moveDown: 'העברה למטה', remove: 'הסרה', tagsHint: 'הפרידו בין תגיות בפסיקים', notesHint: 'הערה אחת בכל שורה',
+    checkDetails: 'כדאי לבדוק את הפרטים האלה', loadFailedTitle: 'לא ניתן לפתוח את המתכון', loadFailedBody: 'נסו שוב בעוד רגע.',
+    textTooLong: 'הטקסט ארוך מדי. אפשר להדביק עד 30,000 תווים.', networkImportFailed: 'לא ניתן להתחבר לשירות המתכונים. בדקו את החיבור ונסו שוב.',
+    processingNote: 'מאתרים את פרטי המתכון ומכינים אותם לספר המתכונים שלכם.', pasteScreenTitle: 'שומרים מתכון שמצאתם',
+    pastePlaceholder: 'הדביקו כאן את טקסט המתכון או קישור לדף המתכון…', totalTime: 'סה״כ', loadingRecipe: 'פותחים את המתכון…',
+    addIntro: 'שמרו מתכון שמצאתם או כתבו אחד מהזיכרון.', pasteCardBody: 'סידור ותרגום של מתכון שמצאתם בכל מקום.',
+    writeCardBody: 'התחילו מדף ריק והפכו אותו לשלכם.', privateByDesign: 'ספר המתכונים נשאר במכשיר הזה',
+    localRecipesNote: 'מתכונים שמורים נשמרים מקומית. רק הקישור או הטקסט שתשלחו מועברים לשירות המתכונים.',
+    importLimit: 'ניצלתם את כל הייבואים של החודש. בפרימיום מקבלים 50 ייבואים בחודש, ואפשר תמיד לכתוב מתכונים בעצמכם בחינם.',
+    linkDetected: 'Mana תיקח מהדף רק את המרכיבים ואת אופן ההכנה, ותתרגם אותם במידת הצורך.',
+    readingPageNote: 'קוראים את המתכון מהדף ומכינים אותו לספר המתכונים שלכם.',
+    pageUnavailable: 'לא הצלחנו לפתוח את הדף. בדקו את הקישור, או העתיקו את טקסט המתכון מהדף והדביקו אותו.',
+    settingsKicker: 'MANA · השולחן שלכם, בדרך שלכם', myRecipe: 'המתכון שלי', minuteAbbrev: 'דק׳', servingsAbbrev: 'מנות', recipeCardFallback: 'מתכון ב-Mana',
+    duplicateTitle: 'ייתכן שהמתכון כבר שמור', duplicateBody: 'מתכון בשם הזה כבר נמצא בספר המתכונים. לשמור עותק נוסף?', saveAnyway: 'שמירת עותק נוסף',
+    recipeNotFound: 'לא מצאנו את המתכון במכשיר הזה.',
+    getStarted: 'מתחילים', welcomeFeature1: 'שומרים מתכונים מכל מקום', welcomeFeature2: 'סידור ותרגום אוטומטיים', welcomeFeature3: 'הכול במקום אחד', hebrewName: 'עברית', findItBody: 'מכל אתר או טקסט', saveItBody: 'בספר המתכונים האישי', cookItBody: 'בתיאבון', browseCategories: 'עיון בקטגוריות', pasteInfo: 'Mana תקרא מהדף רק את המתכון, ותתרגם אותו במידת הצורך.', linkDetectedTitle: 'זוהה קישור למתכון', stepReadingPage: 'קוראים את הדף', stepReadingText: 'קוראים את הטקסט', stepExtracting: 'מחלצים את תוכן המתכון', stepCleaning: 'מסדרים ומארגנים', stepTranslating: 'מתרגמים (במידת הצורך)', all: 'הכול', photo: 'תמונה', addPhoto: 'הוספת תמונה', addPhotoHint: 'שמרו את התמונה מהאתר, או צלמו את המנה שהכנתם.', takePhoto: 'צילום תמונה', choosePhoto: 'בחירת תמונה', changePhoto: 'החלפת תמונה', removePhoto: 'הסרת תמונה', textSize: 'גודל טקסט', slogan: 'הבית של המתכונים שלכם', goodNight: 'לילה טוב', mealBreakfast: 'זמן ארוחת בוקר', mealLunch: 'זמן ארוחת צהריים', mealAfternoon: 'משהו קטן לאחר הצהריים', mealDinner: 'זמן ארוחת ערב', mealLateNight: 'נשנוש של לילה', howAbout: 'מה דעתכם על…', anotherIdea: 'רעיון אחר', noMealMatch: 'עדיין אין בספר המתכונים משהו שמתאים לשעה הזו, אז הנה משהו אחר ששמרתם.', aboutYouTitle: 'קצת עליכם', aboutYouIntro: 'כך Mana תוכל לברך אתכם, להציע מתכונים שתאהבו ולהזהיר ממרכיבים שאתם נמנעים מהם. המידע נשאר בטלפון הזה.', yourName: 'השם שלכם', namePlaceholder: 'איך Mana תקרא לכם?', householdSize: 'מבשלים בשביל', dietsLabel: 'תזונה', allergiesLabel: 'אלרגיות ומרכיבים שאתם נמנעים מהם', cuisinesLabel: 'מטבחים אהובים', skip: 'אחר כך', myProfile: 'הפרופיל שלי', profileHint: 'שם, בני בית, תזונה ואלרגיות', dietVegetarian: 'צמחוני', dietVegan: 'טבעוני', dietGlutenFree: 'ללא גלוטן', dietDairyFree: 'ללא חלב', dietKosher: 'כשר', allergenNuts: 'אגוזים', allergenPeanuts: 'בוטנים', allergenGluten: 'גלוטן', allergenDairy: 'מוצרי חלב', allergenEggs: 'ביצים', allergenFish: 'דגים', allergenShellfish: 'פירות ים', allergenSesame: 'שומשום', allergenSoy: 'סויה', conflictMeat: 'בשר', conflictPork: 'חזיר', conflictHoney: 'דבש', conflictMeatAndDairy: 'בשר וחלב', cuisineItalian: 'איטלקי', cuisineMediterranean: 'ים תיכוני', cuisineMiddleEastern: 'מזרח תיכוני', cuisineAsian: 'אסייתי', cuisineMexican: 'מקסיקני', cuisineFrench: 'צרפתי', cuisineIndian: 'הודי', cuisineHomestyle: 'בישול ביתי', headsUp: 'שימו לב', headsUpContains: 'מכיל: {{items}}', iCookedThis: 'בישלתי את זה', howDidItGo: 'איך יצא?', yourRating: 'הדירוג שלכם', cookNotePlaceholder: 'הערה לפעם הבאה, למשל קצת פחות מלח', cookedOnce: 'הוכן פעם אחת', cookedTimes: 'הוכן {{n}} פעמים', lastCooked: 'בפעם האחרונה {{when}}', yourNotes: 'ההערות שלכם', whenToday: 'היום', whenYesterday: 'אתמול', whenDays: 'לפני {{n}} ימים', whenWeek: 'לפני שבוע', whenWeeks: 'לפני {{n}} שבועות', whenMonth: 'לפני חודש', whenMonths: 'לפני {{n}} חודשים', dislikesLabel: 'מרכיבים שאני לא אוהב', dislikesPlaceholder: 'למשל: כוסברה, זיתים, פטריות', importHeadsUpTitle: 'שימו לב לפני השמירה', importHeadsUpBody: 'המתכון מכיל {{items}}, שסימנתם שאתם נמנעים מהם. להמשיך לבדיקת המתכון?', reviewAnyway: 'להמשיך בכל זאת', planAndBilling: 'מנוי וחיוב', planFree: 'חינם', planPremium: 'פרימיום', currentPlan: 'המנוי שלכם', currentBadge: 'המנוי הנוכחי', importsUsed: 'נוצלו {{used}} מתוך {{limit}} ייבואים החודש', importsLeft: 'נותרו {{left}} מתוך {{limit}} ייבואים החודש', resetsOn: 'מתאפס ב-{{date}}', usageUnavailable: 'הניצול יופיע כאן כשתהיו מחוברים לאינטרנט.', whatCounts: 'כל מתכון שמייבאים מקישור או מטקסט מודבק נחשב לייבוא אחד. כתיבת מתכונים בעצמכם תמיד חינמית וללא הגבלה.', freeFeature1: '3 ייבואים בחודש מקישורים או מטקסט', freeFeature2: 'מתכונים שכתבתם בעצמכם ללא הגבלה', freeFeature3: 'תמונות, מועדפים, פרופיל והצעות לארוחות', premiumFeature1: '50 ייבואים בחודש מקישורים או מטקסט', premiumFeature2: 'כולל תרגום לשפה שלכם', premiumFeature3: 'כל מה שיש בחינם', monthly: 'חודשי', yearly: 'שנתי', perMonth: 'לחודש', perYear: 'לשנה', yearlySave: 'חיסכון של 33%', upgrade: 'שדרוג לפרימיום', restorePurchases: 'שחזור רכישות', seePlans: 'לצפייה במנויים', purchaseSoonTitle: 'זמין בגרסת ה-App Store', purchaseSoonBody: 'המנויים נרכשים בצורה מאובטחת דרך ה-App Store. השדרוג יהיה זמין באפליקציה שתפורסם.', subscriptionTerms: 'התשלום יחויב בחשבון ה-Apple ID שלכם עם אישור הרכישה. המנוי מתחדש אוטומטית אלא אם בוטל לפחות 24 שעות לפני סוף התקופה הנוכחית. אפשר לנהל או לבטל אותו בהגדרות חשבון ה-App Store.', goodMorning: 'בוקר טוב', goodAfternoon: 'צהריים טובים', goodEvening: 'ערב טוב',
+  },
+};
+
+export const categoryLabels: Record<AppLanguage, Record<RecipeCategory, string>> = {
+  en: { starters: 'Starters', soups: 'Soups', salads: 'Salads', 'main-courses': 'Main courses', 'side-dishes': 'Side dishes', 'pasta-rice': 'Pasta & rice', breakfast: 'Breakfast', baking: 'Baking', desserts: 'Desserts', snacks: 'Snacks', 'sauces-dips': 'Sauces & dips', drinks: 'Drinks', other: 'Other' },
+  de: { starters: 'Vorspeisen', soups: 'Suppen', salads: 'Salate', 'main-courses': 'Hauptgerichte', 'side-dishes': 'Beilagen', 'pasta-rice': 'Pasta & Reis', breakfast: 'Frühstück', baking: 'Backen', desserts: 'Desserts', snacks: 'Snacks', 'sauces-dips': 'Saucen & Dips', drinks: 'Getränke', other: 'Sonstiges' },
+  he: { starters: 'מנות ראשונות', soups: 'מרקים', salads: 'סלטים', 'main-courses': 'מנות עיקריות', 'side-dishes': 'תוספות', 'pasta-rice': 'פסטה ואורז', breakfast: 'ארוחת בוקר', baking: 'אפייה', desserts: 'קינוחים', snacks: 'נשנושים', 'sauces-dips': 'רטבים ומטבלים', drinks: 'משקאות', other: 'אחר' },
+};
