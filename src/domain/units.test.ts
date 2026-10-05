@@ -37,6 +37,22 @@ describe('convertIngredient', () => {
     expect(convert('1 lb Hackfleisch', 'metric', 'de').text).toBe('455 g Hackfleisch');
   });
 
+  it('understands common US spellings in pasted or imported lines', () => {
+    expect(convert('1 lb. ground beef', 'metric')).toEqual({ text: '455 g ground beef', original: '1 lb.' });
+    expect(convert('1½ pounds chicken thighs', 'metric').text).toBe('680 g chicken thighs');
+    expect(convert('500g flour', 'us').text).toBe('1 lb flour');
+    expect(convert('2 פאונד בשר טחון', 'metric', 'he').text).toBe('910 גרם בשר טחון');
+  });
+
+  it('converts recipes saved before their unit spelling was recognised', () => {
+    const savedEarlier = { ...parseIngredientLine('x'), quantityText: '2', quantityValue: 2, unit: null, ingredient: 'lbs. potatoes', originalText: '2 lbs. potatoes' };
+    const result = convertIngredient(savedEarlier, 'metric', 'en');
+    expect(formatIngredient(result.ingredient)).toBe('910 g potatoes');
+    expect(result.original).toBe('2 lbs.');
+    const noQuantity = { ...savedEarlier, quantityText: null, quantityValue: null, ingredient: '1½ lb beef' };
+    expect(formatIngredient(convertIngredient(noQuantity, 'metric', 'en').ingredient)).toBe('680 g beef');
+  });
+
   it('leaves amounts alone when nothing needs converting or it is unclear', () => {
     for (const [line, system] of [
       ['200 g flour', 'metric'], ['2 cups flour', 'us'], ['200 g flour', 'original'],

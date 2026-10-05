@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Text } from '../src/components/Typography';
 import { Icon, type IconName } from '../src/components/Icon';
 import { ManaButton } from '../src/components/ManaButton';
@@ -29,6 +29,8 @@ export default function OnboardingScreen() {
   const saveProfile = useProfile((state) => state.saveProfile);
   const [profile, setProfile] = useState(savedProfile);
   const router = useRouter();
+  // The logo keeps a fixed square size and its own space in the layout, so text never sits on top of it.
+  const logoSize = Math.min(220, useWindowDimensions().width * 0.55);
 
   // Steps: 0 welcome, 1 language, 2 about you (optional), 3 intro.
   const next = async (skipProfile = false) => {
@@ -46,7 +48,9 @@ export default function OnboardingScreen() {
         <Text style={[styles.welcomeBrand, { color: colors.primaryText }]}>mana<Text style={{ color: colors.accent }}>.</Text></Text>
         <Text style={[styles.welcomeTagline, { color: colors.muted }]}>{t('tagline')}</Text>
       </View>
-      <Image source={require('../assets/images/welcome-hero.png')} style={styles.hero} resizeMode="cover" accessibilityIgnoresInvertColors />
+      <View style={[styles.logoWrap, { minHeight: logoSize + 24 }]}>
+        <Image source={require('../assets/images/icon.png')} style={{ width: logoSize, height: logoSize, borderRadius: logoSize * 0.22 }} resizeMode="cover" accessibilityIgnoresInvertColors />
+      </View>
       <View style={[styles.featureCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
         {([['restaurant', t('welcomeFeature1')], ['sparkles', t('welcomeFeature2')], ['book', t('welcomeFeature3')]] as [IconName, string][]).map(([icon, label]) => (
           <View key={label} style={styles.featureRow}>
@@ -111,7 +115,7 @@ const styles = StyleSheet.create({
   welcomeHead: { gap: 6, marginTop: 18 },
   welcomeBrand: { fontSize: 46, fontWeight: '800', letterSpacing: -2, writingDirection: 'ltr', alignSelf: 'flex-start' },
   welcomeTagline: { fontSize: 11, fontWeight: '600', letterSpacing: 2.2, textTransform: 'uppercase', lineHeight: 17, maxWidth: 220 },
-  hero: { width: '100%', flex: 1, minHeight: 200, maxHeight: 330, borderRadius: 26, marginVertical: 4 },
+  logoWrap: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', marginVertical: 4 },
   featureCard: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 40 },
   featureIcon: { width: 26, height: 26, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
@@ -125,7 +129,7 @@ const styles = StyleSheet.create({
   radio: { height: 21, width: 21, borderRadius: 11, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   radioDot: { height: 11, width: 11, borderRadius: 6 },
   languageName: { fontSize: 16, fontWeight: '600' }, languageHint: { fontSize: 12, marginTop: 2 },
-  garnish: { position: 'absolute', top: -60, right: -22, width: 120, height: 226 },
+  garnish: { position: 'absolute', top: -60, end: -22, width: 120, height: 226 },
   introTitle: { fontSize: 40, fontWeight: '800', letterSpacing: -1.2, lineHeight: 46, marginTop: 18, maxWidth: 240 },
   introBody: { maxWidth: 290 },
   flow: { flexDirection: 'row', gap: 10, marginTop: 30 },

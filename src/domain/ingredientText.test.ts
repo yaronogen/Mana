@@ -33,6 +33,13 @@ describe('parseIngredientLine', () => {
     expect(item.ingredient).toBe('eggs');
   });
 
+  it('reads units with a trailing period, glued fractions and units typed against the number', () => {
+    expect(parseIngredientLine('1 lb. ground beef')).toMatchObject({ quantityText: '1', unit: 'lb.', ingredient: 'ground beef' });
+    expect(parseIngredientLine('1½ pounds chicken')).toMatchObject({ quantityValue: 1.5, unit: 'pounds', ingredient: 'chicken' });
+    expect(parseIngredientLine('500g Mehl')).toMatchObject({ quantityText: '500', unit: 'g', ingredient: 'Mehl', originalText: '500g Mehl' });
+    expect(parseIngredientLine('3 eggs')).toMatchObject({ quantityText: '3', unit: null, ingredient: 'eggs' });
+  });
+
   it('does not drop text it cannot confidently parse', () => {
     const item = parseIngredientLine('salt to taste');
     expect(formatIngredient(item)).toBe('salt to taste');

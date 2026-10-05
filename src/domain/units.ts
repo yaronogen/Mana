@@ -1,5 +1,6 @@
-import { numericQuantity } from './ingredientText';
+import { normalizeAmounts, numericQuantity, parseIngredientLine } from './ingredientText';
 import type { AppLanguage, Ingredient } from './recipe';
+import { UNIT_ALIASES } from './unitAliases';
 
 /**
  * Display-time measurement conversion. Saved recipes are never changed: callers show the converted
@@ -11,7 +12,7 @@ export type UnitSystem = 'original' | 'metric' | 'us';
 type Canonical = 'g' | 'kg' | 'oz' | 'lb' | 'ml' | 'l' | 'cup' | 'tbsp' | 'tsp';
 type Known = { kind: 'weight' | 'volume'; system: 'metric' | 'us'; factor: number };
 
-// Grams per unit (weight) or millilitres per unit (volume). A cup is 240 ml, as in US labelling and Israeli recipes.
+// Grams per unit (weight) or millilitres per unit (volume), keyed by the canonical names in unitAliases.ts. A cup is 240 ml, as in US labelling and Israeli recipes.
 const KNOWN: Record<string, Known> = {
   g: { kind: 'weight', system: 'metric', factor: 1 },
   kg: { kind: 'weight', system: 'metric', factor: 1000 },
@@ -27,17 +28,6 @@ const KNOWN: Record<string, Known> = {
   quart: { kind: 'volume', system: 'us', factor: 946.353 },
 };
 
-const ALIASES: Record<string, keyof typeof KNOWN> = {
-  g: 'g', gr: 'g', gram: 'g', grams: 'g', gramm: 'g', gramme: 'g', grammes: 'g', 'גרם': 'g', 'ג׳': 'g', "ג'": 'g',
-  kg: 'kg', kilo: 'kg', kilos: 'kg', kilogram: 'kg', kilograms: 'kg', kilogramm: 'kg', 'ק״ג': 'kg', 'ק"ג': 'kg', 'קילו': 'kg',
-  oz: 'oz', ounce: 'oz', ounces: 'oz', unze: 'oz', unzen: 'oz', 'אונקיה': 'oz', 'אונקיות': 'oz',
-  lb: 'lb', lbs: 'lb', pound: 'lb', pounds: 'lb', pfund: 'lb', 'ליברה': 'lb', 'ליברות': 'lb',
-  ml: 'ml', milliliter: 'ml', milliliters: 'ml', millilitre: 'ml', millilitres: 'ml', 'מ״ל': 'ml', 'מ"ל': 'ml', 'מל': 'ml',
-  cl: 'cl', dl: 'dl', l: 'l', liter: 'l', liters: 'l', litre: 'l', litres: 'l', 'ליטר': 'l',
-  cup: 'cup', cups: 'cup', 'כוס': 'cup', 'כוסות': 'cup',
-  'fl oz': 'floz', 'fl. oz': 'floz', 'fluid ounce': 'floz', 'fluid ounces': 'floz',
-  pint: 'pint', pints: 'pint', quart: 'quart', quarts: 'quart',
-};
 
 const LABELS: Record<AppLanguage, Record<Canonical, [string, string]>> = {
   en: { g: ['g', 'g'], kg: ['kg', 'kg'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['ml', 'ml'], l: ['l', 'l'], cup: ['cup', 'cups'], tbsp: ['tbsp', 'tbsp'], tsp: ['tsp', 'tsp'] },
@@ -51,13 +41,13 @@ const RANGE = new RegExp(`^(${AMOUNT})(?:\\s*(?:-|–|to|bis|עד)\\s*(${AMOUNT}
 
 function lookupUnit(unit: string | null): Known | null {
   if (!unit) return null;
-  const key = ALIASES[unit.trim().toLocaleLowerCase().replace(/\.$/, '')];
+  const key = UNIT_ALIASES[unit.trim().toLocaleLowerCase().replace(/\.$/, '')];
   return key ? KNOWN[key] : null;
 }
 
 /** "1 1/2" → [1.5], "400–450" → [400, 450]; null when the amount is not plainly numeric. */
 function parseAmounts(text: string): number[] | null {
-  const match = text.trim().match(RANGE);
+  const match = normalizeAmounts(text.trim()).match(RANGE);
   if (!match) return null;
   const values = [match[1], match[2]].filter((part): part is string => part !== undefined).map(numericQuantity);
   return values.every((value): value is number => value !== null && value > 0) ? values : null;
@@ -108,12 +98,26 @@ function formatIn(base: number, unit: Canonical): { text: string; value: number 
   }
 }
 
+/**
+ * Recipes saved before a spelling was understood (e.g. "1 lb. beef", "1½ pounds", "500g") may hold the
+ * unit inside the ingredient name. Re-reading the line lets them convert without editing the saved recipe.
+ */
+function withRecognisedUnit(item: Ingredient): Ingredient {
+  if (lookupUnit(item.unit)) return item;
+  const line = [item.quantityText, item.unit, item.ingredient].filter(Boolean).join(' ');
+  const reparsed = parseIngredientLine(line);
+  if (!lookupUnit(reparsed.unit)) return item;
+  return { ...item, quantityText: reparsed.quantityText, quantityValue: reparsed.quantityValue, unit: reparsed.unit, ingredient: reparsed.ingredient };
+}
+
 export type ConvertedIngredient = { ingredient: Ingredient; original: string | null };
 
 /** Converts one ingredient's amount into the chosen system; `original` is set only when something changed. */
-export function convertIngredient(item: Ingredient, system: UnitSystem, language: AppLanguage): ConvertedIngredient {
-  const unchanged = { ingredient: item, original: null };
-  if (system === 'original' || !item.quantityText) return unchanged;
+export function convertIngredient(stored: Ingredient, system: UnitSystem, language: AppLanguage): ConvertedIngredient {
+  const unchanged = { ingredient: stored, original: null };
+  if (system === 'original') return unchanged;
+  const item = withRecognisedUnit(stored);
+  if (!item.quantityText) return unchanged;
   const known = lookupUnit(item.unit);
   if (!known || known.system === system) return unchanged;
   const amounts = parseAmounts(item.quantityText);
