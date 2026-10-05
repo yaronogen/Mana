@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { defaultGrocerySelection } from '../domain/groceries';
 import { formatIngredient } from '../domain/ingredientText';
 import type { Recipe } from '../domain/recipe';
 import { convertIngredient } from '../domain/units';
@@ -18,11 +17,11 @@ export function AddToGroceriesSheet({ recipe, visible, onClose, onAdd }: { recip
   const { t } = useTranslation();
   const rtl = usePreferences((state) => state.language === 'he');
   const unitSystem = usePreferences((state) => state.unitSystem);
-  const [selected, setSelected] = useState<Set<string>>(() => defaultGrocerySelection(recipe.ingredients));
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [busy, setBusy] = useState(false);
 
-  // Start fresh each time the sheet opens, in case the recipe was edited meanwhile.
-  useEffect(() => { if (visible) setSelected(defaultGrocerySelection(recipe.ingredients)); }, [visible, recipe.ingredients]);
+  // Start with nothing ticked each time the sheet opens: you pick what you need to buy.
+  useEffect(() => { if (visible) setSelected(new Set()); }, [visible, recipe.ingredients]);
 
   const allSelected = selected.size === recipe.ingredients.length;
   const toggle = (id: string) => setSelected((current) => {
@@ -34,7 +33,6 @@ export function AddToGroceriesSheet({ recipe, visible, onClose, onAdd }: { recip
     setBusy(true);
     try { await onAdd(recipe.ingredients.filter((item) => selected.has(item.id)).map((item) => item.id)); } finally { setBusy(false); }
   };
-  const recipeDirection = { writingDirection: recipe.outputLanguage === 'he' ? 'rtl' as const : 'ltr' as const };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -55,7 +53,7 @@ export function AddToGroceriesSheet({ recipe, visible, onClose, onAdd }: { recip
               return <Pressable key={ingredient.id} accessibilityRole="checkbox" accessibilityState={{ checked }} onPress={() => toggle(ingredient.id)}
                 style={[styles.row, index < recipe.ingredients.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.line }]}>
                 <Icon name={checked ? 'checkSquare' : 'square'} color={checked ? colors.primaryText : colors.muted} size={22} />
-                <Text style={[styles.rowText, { color: checked ? colors.text : colors.muted }, recipeDirection]}>{formatIngredient(convertIngredient(ingredient, unitSystem, recipe.outputLanguage).ingredient, resources[recipe.outputLanguage].optional)}</Text>
+                <Text style={[styles.rowText, { color: checked ? colors.text : colors.muted }]}>{formatIngredient(convertIngredient(ingredient, unitSystem, recipe.outputLanguage).ingredient, resources[recipe.outputLanguage].optional)}</Text>
               </Pressable>;
             })}
           </ScrollView>

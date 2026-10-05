@@ -5,6 +5,7 @@ import type { Recipe } from '../domain/recipe';
 import { categoryLabels } from '../i18n/resources';
 import { usePreferences } from '../stores/preferences';
 import { useManaTheme } from '../theme/useManaTheme';
+import { Icon } from './Icon';
 import { RecipeImage } from './RecipeImage';
 
 /** Photo card used in the "Recently added" shelf. */
@@ -19,7 +20,7 @@ export function RecipeCard({ recipe, onPress, compact = false }: { recipe: Recip
     }]}>
       <View>
         <RecipeImage uri={recipe.imageUri} style={styles.art} />
-        {recipe.favorite && <View style={[styles.heart, { backgroundColor: colors.surface }]}><Text style={{ color: colors.accentText, fontSize: 14 }}>{'♥︎'}</Text></View>}
+        {recipe.favorite && <View style={[styles.heart, { backgroundColor: colors.surface }]}><Icon name="heartFill" color={colors.accentText} size={14} /></View>}
       </View>
       <View style={styles.content}>
         <Text numberOfLines={1} style={[styles.category, { color: colors.muted }]}>{label}</Text>
@@ -35,7 +36,7 @@ export function RecipeCard({ recipe, onPress, compact = false }: { recipe: Recip
 const styles = StyleSheet.create({
   card: { borderRadius: 18, borderWidth: 1, overflow: 'hidden' },
   art: { width: '100%', height: 120 },
-  heart: { position: 'absolute', right: 10, top: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  heart: { position: 'absolute', end: 10, top: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: 14, paddingVertical: 12 },
   category: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 5 },
   title: { fontSize: 15, fontWeight: '700', lineHeight: 20, minHeight: 40 },

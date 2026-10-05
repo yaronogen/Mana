@@ -14,6 +14,9 @@ AI imports are not live until Supabase is configured, anonymous sign-in is enabl
 - Keep UI strings in `src/i18n/resources.ts`; maintain English, German, and Hebrew together. Keep Hebrew RTL and mixed-script quantities in mind.
 - Keep AI logic out of route components. The client calls the authenticated Supabase Edge Function; validate structured output with Zod before preview/save.
 - Preserve supplied quantities, units, ranges, temperatures, times, and attribution. Do not fill in missing facts. Surface ambiguity as a warning.
+- Saved recipes follow the app language: `src/stores/translations.ts` asks the Edge Function (`action: 'translate'`, own monthly allowance, never an import) to translate a recipe's wording, cached in the `recipe_translations` table and keyed by a content fingerprint. The stored recipe is never overwritten: load with `getRecipe(id, language)` / `getRecipes({ language })` for display and without `language` for editing or saving.
+- Text direction follows each text's content (Typography `Text`/`TextInput`): Hebrew right-to-left, other scripts left-to-right; screens don't set `writingDirection` per recipe.
+- Recipe detail lives in `app/(tabs)/recipe/[id].tsx` (hidden tab, `href: null`) so the tab bar stays visible.
 - Unit conversion (Settings → Measurements) is deterministic and display-time only (`src/domain/units.ts`): stored recipes keep their original amounts, converted amounts are shown with the original alongside, and the AI never converts.
 - Add/update tests for domain, share, localization, and extraction-schema changes. Fixtures include German, English, Hebrew, Italian, French, and Spanish inputs.
 - Avoid committing credentials, generated output (`dist/`), or `node_modules/`.

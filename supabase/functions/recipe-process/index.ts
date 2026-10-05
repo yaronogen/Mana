@@ -33,7 +33,7 @@ Deno.serve(async (request) => {
 
     const requestBody: unknown = await request.json();
     if (!requestBody || typeof requestBody !== 'object') return json(400, { error: 'invalid_request' });
-    const body = requestBody as { action?: unknown; text?: unknown; url?: unknown; targetLanguage?: unknown };
+    const body = requestBody as { action?: unknown; text?: unknown; url?: unknown; targetLanguage?: unknown; content?: unknown };
 
     // Plan and monthly usage for the billing screen; does not consume an import.
     if (body.action === 'usage') {
@@ -45,6 +45,19 @@ Deno.serve(async (request) => {
 
     if (typeof body.targetLanguage !== 'string' || !languages[body.targetLanguage]) return json(400, { error: 'invalid_request' });
     const targetLanguage = body.targetLanguage;
+
+    // Translates the wording of a recipe the user already saved, to show it in another app language.
+    // It has its own monthly allowance and never consumes an import.
+    if (body.action === 'translate') {
+      if (!body.content || typeof body.content !== 'object') return json(400, { error: 'invalid_request' });
+      const contentJson = JSON.stringify(body.content);
+      if (contentJson.length > maxCharacters) return json(413, { error: 'text_too_long' });
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: allowed, error: quotaError } = await admin.rpc('consume_recipe_translation', { p_user_id: user.id });
+      if (quotaError) return json(503, { error: 'service_unavailable' });
+      if (!allowed) return json(429, { error: 'translation_limit_reached' });
+      return json(200, await createRecipeAiProvider().translateSaved(contentJson, targetLanguage));
+    }
 
     let pageUrl: string | null = null;
     let imageUrl: string | null = null;

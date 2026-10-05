@@ -4,6 +4,7 @@ import type { AppLanguage } from '../domain/recipe';
 import type { UnitSystem } from '../domain/units';
 import i18n from '../i18n';
 import { applyLayoutDirection } from '../i18n/direction';
+import { useTranslations } from './translations';
 
 export type Appearance = 'system' | 'light' | 'dark';
 
@@ -36,6 +37,8 @@ export const usePreferences = create<PreferencesState>((set, get) => ({
         onboarded: onboarded === 'true', hydrated: true,
       });
       applyLayoutDirection();
+      // Catch up on recipes saved in another language (e.g. imported before switching languages).
+      void useTranslations.getState().translateCookbook(nextLanguage).catch(() => undefined);
     } catch {
       set({ hydrated: true });
     }
@@ -45,6 +48,8 @@ export const usePreferences = create<PreferencesState>((set, get) => ({
     await setSetting('language', language);
     set({ language });
     applyLayoutDirection();
+    // Show saved recipes in the new language too; each is translated once and cached on the device.
+    void useTranslations.getState().translateCookbook(language).catch(() => undefined);
   },
   setAppearance: async (appearance) => {
     await setSetting('appearance', appearance);

@@ -45,7 +45,7 @@ export default function OnboardingScreen() {
   if (step === 0) return (
     <Screen contentStyle={styles.container}>
       <View style={styles.welcomeHead}>
-        <Text style={[styles.welcomeBrand, { color: colors.primaryText }]}>mana<Text style={{ color: colors.accent }}>.</Text></Text>
+        <Text style={[styles.welcomeBrand, { color: colors.primaryText }]}>Mana</Text>
         <Text style={[styles.welcomeTagline, { color: colors.muted }]}>{t('tagline')}</Text>
       </View>
       <View style={[styles.logoWrap, { minHeight: logoSize + 24 }]}>
@@ -113,7 +113,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, paddingTop: 18, paddingBottom: 30 },
   welcomeHead: { gap: 6, marginTop: 18 },
-  welcomeBrand: { fontSize: 46, fontWeight: '800', letterSpacing: -2, writingDirection: 'ltr', alignSelf: 'flex-start' },
+  welcomeBrand: { fontSize: 60, lineHeight: 68, fontWeight: '800', letterSpacing: -2.6, writingDirection: 'ltr', alignSelf: 'flex-start' },
   welcomeTagline: { fontSize: 11, fontWeight: '600', letterSpacing: 2.2, textTransform: 'uppercase', lineHeight: 17, maxWidth: 220 },
   logoWrap: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', marginVertical: 4 },
   featureCard: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },

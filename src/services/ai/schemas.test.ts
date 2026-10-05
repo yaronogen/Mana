@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { recipeDraftSchema } from './schemas';
+import { parseIngredientLine } from '../../domain/ingredientText';
+import type { Recipe } from '../../domain/recipe';
+import { isTranslationFresh } from '../../domain/recipeTranslation';
+import { parseRecipeTranslation, recipeDraftSchema } from './schemas';
 
 const validDraft = {
   title: 'Lemon lentils', description: null, sourceLanguage: 'en', sourceUrl: null, sourceName: null,
@@ -19,5 +22,32 @@ describe('AI recipe output schema', () => {
   it('rejects missing core recipe content and unsupported categories', () => {
     expect(recipeDraftSchema.safeParse({ ...validDraft, ingredients: [] }).success).toBe(false);
     expect(recipeDraftSchema.safeParse({ ...validDraft, category: 'miscellaneous' }).success).toBe(false);
+  });
+});
+
+describe('saved-recipe translation output', () => {
+  const recipe: Recipe = {
+    id: 'r1', title: 'Linsensuppe', description: null, sourceLanguage: 'de', outputLanguage: 'de', sourceUrl: null, sourceName: null, imageUri: null,
+    servings: 4, preparationTime: null, cookingTime: 30, totalTime: null,
+    ingredients: [parseIngredientLine('200 g rote Linsen'), parseIngredientLine('1 l Gemüsebrühe')],
+    steps: [{ id: 's1', text: '30 Minuten köcheln.' }], category: 'soups', tags: [], notes: [], warnings: [],
+    favorite: false, rating: null, lastCookedAt: null, cookCount: 0, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+  const payload = {
+    title: 'מרק עדשים', description: null,
+    ingredients: [{ ingredient: 'עדשים כתומות', preparation: null, unit: 'גרם' }, { ingredient: 'ציר ירקות', preparation: null, unit: 'ליטר' }],
+    steps: ['מבשלים 30 דקות.'], tags: [], notes: [], warnings: [],
+  };
+
+  it('accepts a translation that lines up with the recipe', () => {
+    const translation = parseRecipeTranslation(recipe, 'he', payload);
+    expect(translation?.title).toBe('מרק עדשים');
+    expect(isTranslationFresh(recipe, translation)).toBe(true);
+  });
+
+  it('rejects a translation that dropped or added an ingredient or step', () => {
+    expect(parseRecipeTranslation(recipe, 'he', { ...payload, ingredients: payload.ingredients.slice(0, 1) })).toBeNull();
+    expect(parseRecipeTranslation(recipe, 'he', { ...payload, steps: [...payload.steps, 'מגישים.'] })).toBeNull();
+    expect(parseRecipeTranslation(recipe, 'he', { title: '' })).toBeNull();
   });
 });

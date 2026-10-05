@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultGrocerySelection, formatGroceryShare, groceryItemsFromRecipe, groupGroceries, manualGroceryItem, type GroceryItem } from './groceries';
+import { formatGroceryShare, groceryItemsFromRecipe, groupGroceries, manualGroceryItem, type GroceryItem } from './groceries';
 import { parseIngredientLine } from './ingredientText';
 import type { Recipe } from './recipe';
 
@@ -17,12 +17,6 @@ const item = (overrides: Partial<GroceryItem>): GroceryItem => ({
 });
 
 describe('groceries', () => {
-  it('preselects every ingredient except optional ones', () => {
-    const selection = defaultGrocerySelection(recipe.ingredients);
-    expect(selection.size).toBe(3);
-    expect(selection.has(optionalParsley.id)).toBe(false);
-  });
-
   it('copies the chosen ingredients with their quantities, ranges and units untouched', () => {
     const chosen = [recipe.ingredients[1].id, recipe.ingredients[2].id, optionalParsley.id];
     const items = groceryItemsFromRecipe(recipe, chosen, { optionalLabel: 'אופציונלי', now: new Date('2026-02-01T10:00:00.000Z') });

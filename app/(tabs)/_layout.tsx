@@ -11,6 +11,8 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      // Back from a recipe returns to the tab it was opened from.
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primaryText,
@@ -46,6 +48,8 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <SymbolView name={{ ios: 'cart.fill', android: 'shopping_cart', web: 'shopping_cart' }} tintColor={color} size={22} />,
         }}
       />
+      {/* Recipes open inside the tabs so the tab bar stays visible; the route has no tab button of its own. */}
+      <Tabs.Screen name="recipe/[id]" options={{ href: null }} />
       <Tabs.Screen
         name="settings"
         options={{

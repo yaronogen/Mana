@@ -1,6 +1,7 @@
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import type { GroceryItem } from '../domain/groceries';
-import { createId, type CookLogEntry, type Recipe } from '../domain/recipe';
+import { createId, type AppLanguage, type CookLogEntry, type Recipe } from '../domain/recipe';
+import { applyTranslation, type RecipeTranslation, type RecipeTranslationContent } from '../domain/recipeTranslation';
 
 let databasePromise: Promise<SQLiteDatabase> | undefined;
 let setupPromise: Promise<void> | undefined;
@@ -46,6 +47,13 @@ async function getDatabase(): Promise<SQLiteDatabase> {
         note TEXT
       );
       CREATE INDEX IF NOT EXISTS cook_log_recipe_idx ON cook_log(recipe_id, cooked_at DESC);
+      CREATE TABLE IF NOT EXISTS recipe_translations (
+        recipe_id TEXT NOT NULL,
+        language TEXT NOT NULL,
+        source_fingerprint TEXT NOT NULL,
+        content TEXT NOT NULL,
+        PRIMARY KEY (recipe_id, language)
+      );
       CREATE TABLE IF NOT EXISTS grocery_items (
         id TEXT PRIMARY KEY NOT NULL,
         text TEXT NOT NULL,
@@ -90,7 +98,11 @@ function fromRow(row: Record<string, unknown>): Recipe {
   };
 }
 
-export async function getRecipes(options: { query?: string; favoritesOnly?: boolean; category?: string } = {}): Promise<Recipe[]> {
+/**
+ * Recipes as saved. With `language`, recipes saved in another language come back in their cached
+ * translation when one is fresh, and search also matches the translated wording.
+ */
+export async function getRecipes(options: { query?: string; favoritesOnly?: boolean; category?: string; language?: AppLanguage } = {}): Promise<Recipe[]> {
   const database = await getDatabase();
   const clauses: string[] = [];
   const arguments_: (string | number)[] = [];
@@ -99,18 +111,54 @@ export async function getRecipes(options: { query?: string; favoritesOnly?: bool
   const query = options.query?.trim().toLocaleLowerCase();
   if (query) {
     const like = `%${query}%`;
-    clauses.push('(lower(title) LIKE ? OR lower(ingredients) LIKE ? OR lower(category) LIKE ? OR lower(tags) LIKE ?)');
-    arguments_.push(like, like, like, like);
+    clauses.push(`(lower(title) LIKE ? OR lower(ingredients) LIKE ? OR lower(category) LIKE ? OR lower(tags) LIKE ?
+      OR id IN (SELECT recipe_id FROM recipe_translations WHERE language = ? AND lower(content) LIKE ?))`);
+    arguments_.push(like, like, like, like, options.language ?? '', like);
   }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   const rows = await database.getAllAsync<Record<string, unknown>>(`SELECT * FROM recipes ${where} ORDER BY updated_at DESC`, ...arguments_);
-  return rows.map(fromRow);
+  const recipes = rows.map(fromRow);
+  if (!options.language) return recipes;
+  const translations = new Map((await getTranslations(options.language)).map((item) => [item.recipeId, item]));
+  return recipes.map((recipe) => applyTranslation(recipe, translations.get(recipe.id)));
 }
 
-export async function getRecipe(id: string): Promise<Recipe | null> {
+/** One recipe as saved; with `language`, shown in its fresh cached translation when there is one. Edit the saved one. */
+export async function getRecipe(id: string, language?: AppLanguage): Promise<Recipe | null> {
   const database = await getDatabase();
   const row = await database.getFirstAsync<Record<string, unknown>>('SELECT * FROM recipes WHERE id = ?', id);
-  return row ? fromRow(row) : null;
+  if (!row) return null;
+  const recipe = fromRow(row);
+  return language ? applyTranslation(recipe, await getTranslation(id, language)) : recipe;
+}
+
+function translationFromRow(row: Record<string, unknown>): RecipeTranslation {
+  return {
+    ...(JSON.parse(String(row.content)) as RecipeTranslationContent),
+    recipeId: String(row.recipe_id), language: row.language as AppLanguage, sourceFingerprint: String(row.source_fingerprint),
+  };
+}
+
+export async function getTranslations(language: AppLanguage): Promise<RecipeTranslation[]> {
+  const database = await getDatabase();
+  const rows = await database.getAllAsync<Record<string, unknown>>('SELECT * FROM recipe_translations WHERE language = ?', language);
+  return rows.map(translationFromRow);
+}
+
+export async function getTranslation(recipeId: string, language: AppLanguage): Promise<RecipeTranslation | null> {
+  const database = await getDatabase();
+  const row = await database.getFirstAsync<Record<string, unknown>>('SELECT * FROM recipe_translations WHERE recipe_id = ? AND language = ?', recipeId, language);
+  return row ? translationFromRow(row) : null;
+}
+
+export async function saveTranslation(translation: RecipeTranslation): Promise<void> {
+  const database = await getDatabase();
+  const { recipeId, language, sourceFingerprint, ...content } = translation;
+  await database.runAsync(
+    `INSERT INTO recipe_translations (recipe_id, language, source_fingerprint, content) VALUES (?, ?, ?, ?)
+     ON CONFLICT(recipe_id, language) DO UPDATE SET source_fingerprint=excluded.source_fingerprint, content=excluded.content`,
+    recipeId, language, sourceFingerprint, JSON.stringify(content),
+  );
 }
 
 export async function saveRecipe(recipe: Recipe): Promise<void> {
@@ -142,6 +190,7 @@ export async function deleteRecipe(id: string): Promise<void> {
   const database = await getDatabase();
   await database.runAsync('DELETE FROM recipes WHERE id = ?', id);
   await database.runAsync('DELETE FROM cook_log WHERE recipe_id = ?', id);
+  await database.runAsync('DELETE FROM recipe_translations WHERE recipe_id = ?', id);
 }
 
 /** Records that a recipe was cooked, with an optional 1–5 rating and a personal note. */

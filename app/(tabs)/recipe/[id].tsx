@@ -1,30 +1,33 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Fragment, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
-import { Text } from '../../src/components/Typography';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Text } from '../../../src/components/Typography';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AddToGroceriesSheet } from '../../src/components/AddToGroceriesSheet';
-import { CookedSheet, Stars, describeWhen } from '../../src/components/CookedSheet';
-import { HeadsUp } from '../../src/components/HeadsUp';
-import { Icon } from '../../src/components/Icon';
-import { ManaButton } from '../../src/components/ManaButton';
-import { choosePhotoAction } from '../../src/components/photoActions';
-import { RecipeImage } from '../../src/components/RecipeImage';
-import { Screen } from '../../src/components/Screen';
-import { addGroceries, getCookLog, getRecipe, logCook, toggleFavorite } from '../../src/data/database';
-import { groceryItemsFromRecipe } from '../../src/domain/groceries';
-import { convertIngredient, convertTemperatures } from '../../src/domain/units';
-import { formatIngredient } from '../../src/domain/ingredientText';
-import type { CookLogEntry, Recipe } from '../../src/domain/recipe';
-import { categoryLabels, resources } from '../../src/i18n/resources';
-import { deleteRecipeWithImage, pickRecipeImage, saveRecipeWithImage } from '../../src/services/images/recipeImages';
-import { formatRecipeShare } from '../../src/services/sharing/formatRecipeShare';
-import { usePreferences } from '../../src/stores/preferences';
-import { useManaTheme } from '../../src/theme/useManaTheme';
+import { AddToGroceriesSheet } from '../../../src/components/AddToGroceriesSheet';
+import { CookedSheet, Stars, describeWhen } from '../../../src/components/CookedSheet';
+import { HeadsUp } from '../../../src/components/HeadsUp';
+import { Icon } from '../../../src/components/Icon';
+import { ManaButton } from '../../../src/components/ManaButton';
+import { choosePhotoAction } from '../../../src/components/photoActions';
+import { RecipeImage } from '../../../src/components/RecipeImage';
+import { Screen } from '../../../src/components/Screen';
+import { addGroceries, getCookLog, getRecipe, logCook, toggleFavorite } from '../../../src/data/database';
+import { groceryItemsFromRecipe } from '../../../src/domain/groceries';
+import { convertIngredient, convertTemperatures } from '../../../src/domain/units';
+import { formatIngredient } from '../../../src/domain/ingredientText';
+import type { CookLogEntry, Recipe } from '../../../src/domain/recipe';
+import { categoryLabels, resources } from '../../../src/i18n/resources';
+import { deleteRecipeWithImage, pickRecipeImage, saveRecipeWithImage } from '../../../src/services/images/recipeImages';
+import { formatRecipeShare } from '../../../src/services/sharing/formatRecipeShare';
+import { usePreferences } from '../../../src/stores/preferences';
+import { useTranslations } from '../../../src/stores/translations';
+import { useManaTheme } from '../../../src/theme/useManaTheme';
 
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  // `saved` is the recipe as stored (all edits go there); `recipe` is how it is shown in the app language.
+  const [saved, setSaved] = useState<Recipe | null>(null);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [cookLog, setCookLog] = useState<CookLogEntry[]>([]);
   const [cookSheet, setCookSheet] = useState(false);
@@ -36,28 +39,46 @@ export default function RecipeDetailScreen() {
   const unitSystem = usePreferences((state) => state.unitSystem);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const translationVersion = useTranslations((state) => state.version);
+  const translationStatus = useTranslations((state) => state.status);
+  const translatingThis = useTranslations((state) => !!state.pending[id]);
+  const translateOne = useTranslations((state) => state.translateOne);
+
+  const reload = useCallback(async () => {
+    const [stored, shown] = await Promise.all([getRecipe(id), getRecipe(id, language)]);
+    setSaved(stored);
+    setRecipe(shown);
+    return { stored, shown };
+  }, [id, language]);
 
   const load = useCallback(() => {
     let active = true;
     setLoading(true);
     void getCookLog(id).then((entries) => { if (active) setCookLog(entries); }).catch(() => undefined);
-    void getRecipe(id).then((item) => { if (active) setRecipe(item); }).catch(() => { if (active) setRecipe(null); }).finally(() => { if (active) setLoading(false); });
+    void Promise.all([getRecipe(id), getRecipe(id, language)]).then(([stored, shown]) => {
+      if (!active) return;
+      setSaved(stored);
+      setRecipe(shown);
+      // Saved in another language and not translated yet (or edited since): translate it now.
+      if (stored && shown && shown.outputLanguage !== language) void translateOne(stored, language);
+    }).catch(() => { if (active) { setSaved(null); setRecipe(null); } }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [id]);
+  }, [id, language, translationVersion, translateOne]);
   useFocusEffect(load);
 
-  if (!recipe) return <Screen contentStyle={styles.notFound}>
+  // The tab keeps this screen mounted; never show the previous recipe while another one opens.
+  if (!recipe || !saved || recipe.id !== id) return <Screen contentStyle={styles.notFound}>
     <Text style={[styles.notFoundText, { color: colors.text }]}>{loading ? t('loadingRecipe') : t('recipeNotFound')}</Text>
     {!loading && <ManaButton title={t('recipes')} onPress={() => router.replace('/(tabs)/recipes')} secondary />}
   </Screen>;
-  const rtl = recipe.outputLanguage === 'he';
-  // Recipe text follows the recipe's own language; natural alignment then puts Hebrew on the right.
-  const textDirection = { writingDirection: rtl ? 'rtl' as const : 'ltr' as const };
+  const untranslated = recipe.outputLanguage !== language;
+  const translationNote = translatingThis ? t('translatingRecipe')
+    : translationStatus === 'limit' ? t('translationLimit') : translationStatus === 'unavailable' ? t('translationUnavailable') : t('shownInOriginal');
   const share = async () => { await Share.share({ message: formatRecipeShare(recipe) }); };
-  const favorite = async () => { await toggleFavorite(recipe.id); setRecipe(await getRecipe(recipe.id)); };
+  const favorite = async () => { await toggleFavorite(recipe.id); await reload(); };
   const saveCook = async (rating: number | null, note: string | null) => {
     await logCook(recipe.id, rating, note);
-    setRecipe(await getRecipe(recipe.id));
+    await reload();
     setCookLog(await getCookLog(recipe.id));
   };
   const addToGroceries = async (ingredientIds: string[]) => {
@@ -74,11 +95,13 @@ export default function RecipeDetailScreen() {
     if (!action) return;
     const imageUri = action === 'remove' ? null : await pickRecipeImage(action);
     if (action !== 'remove' && !imageUri) return;
-    setRecipe(await saveRecipeWithImage({ ...recipe, imageUri, updatedAt: new Date().toISOString() }, recipe.imageUri));
+    // Save onto the stored recipe, never the translated view.
+    await saveRecipeWithImage({ ...saved, imageUri, updatedAt: new Date().toISOString() }, saved.imageUri);
+    await reload();
   };
   const remove = () => Alert.alert(t('deleteRecipe'), t('deleteConfirm'), [
     { text: t('cancel'), style: 'cancel' },
-    { text: t('delete'), style: 'destructive', onPress: () => { void deleteRecipeWithImage(recipe).then(() => router.replace('/(tabs)/recipes')); } },
+    { text: t('delete'), style: 'destructive', onPress: () => { void deleteRecipeWithImage(saved).then(() => router.replace('/(tabs)/recipes')); } },
   ]);
   const stats = [
     { label: t('prepTime'), value: recipe.preparationTime, unit: t('minutes') },
@@ -97,10 +120,10 @@ export default function RecipeDetailScreen() {
         <View style={styles.hero}>
           <RecipeImage uri={recipe.imageUri} style={styles.heroImage} glyphSize={80} />
           <View style={[styles.heroBar, { top: insets.top + 10 }]}>
-            {circle('back', t('cancel'), () => router.canGoBack() ? router.back() : router.replace('/(tabs)/recipes'))}
+            {circle('back', t('cancel'), () => router.canGoBack() ? router.back() : router.navigate('/(tabs)/recipes'))}
             <View style={{ flex: 1 }} />
             <Pressable accessibilityRole="button" accessibilityLabel={t('favorite')} accessibilityState={{ selected: recipe.favorite }} onPress={() => void favorite()} hitSlop={6} style={[styles.circle, { backgroundColor: colors.surface }]}>
-              <Text style={{ fontSize: 19, color: recipe.favorite ? '#D9534F' : colors.text }}>{recipe.favorite ? '♥︎' : '♡︎'}</Text>
+              <Icon name={recipe.favorite ? 'heartFill' : 'heart'} color={recipe.favorite ? colors.accentText : colors.text} size={19} />
             </Pressable>
             {circle('share', t('share'), () => void share())}
           </View>
@@ -112,8 +135,15 @@ export default function RecipeDetailScreen() {
 
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <Text style={[styles.category, { color: colors.primaryText }]}>{categoryLabels[language][recipe.category]}</Text>
-          <Text style={[styles.title, { color: colors.text }, textDirection]}>{recipe.title}</Text>
-          {!!recipe.description && <Text style={[styles.description, { color: colors.muted }, textDirection]}>{recipe.description}</Text>}
+          <Text style={[styles.title, { color: colors.text }]}>{recipe.title}</Text>
+          {!!recipe.description && <Text style={[styles.description, { color: colors.muted }]}>{recipe.description}</Text>}
+          {untranslated && <View style={[styles.translationNote, { backgroundColor: colors.primarySoft }]}>
+            {translatingThis ? <ActivityIndicator size="small" color={colors.primaryText} /> : <Icon name="globe" color={colors.primaryText} size={16} />}
+            <Text style={[styles.translationText, { color: colors.primaryText }]}>{translationNote}</Text>
+            {!translatingThis && translationStatus === 'offline' && <Pressable accessibilityRole="button" onPress={() => void translateOne(saved, language)} hitSlop={8}>
+              <Text style={[styles.translationRetry, { color: colors.primaryText }]}>{t('retry')}</Text>
+            </Pressable>}
+          </View>}
           <HeadsUp recipe={recipe} />
 
           {!!stats.length && <View style={[styles.stats, { backgroundColor: colors.surface, borderColor: colors.line }]}>
@@ -147,8 +177,8 @@ export default function RecipeDetailScreen() {
               return <View key={ingredient.id} style={[styles.ingredientRow, index < recipe.ingredients.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.line }]}>
                 <View style={[styles.ingredientDot, { backgroundColor: colors.primarySoft }]}><Icon name="asterisk" color={colors.primaryText} size={12} /></View>
                 <View style={styles.ingredientBody}>
-                  <Text style={[styles.ingredientText, { color: colors.text }, textDirection]}>{formatIngredient(converted.ingredient, resources[recipe.outputLanguage].optional)}</Text>
-                  {converted.original && <Text style={[styles.originalAmount, { color: colors.muted }, textDirection]}>{converted.original}</Text>}
+                  <Text style={[styles.ingredientText, { color: colors.text }]}>{formatIngredient(converted.ingredient, resources[recipe.outputLanguage].optional)}</Text>
+                  {converted.original && <Text style={[styles.originalAmount, { color: colors.muted }]}>{converted.original}</Text>}
                 </View>
               </View>;
             })}
@@ -158,7 +188,7 @@ export default function RecipeDetailScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('preparation')} <Text style={[styles.count, { color: colors.muted }]}>({recipe.steps.length})</Text></Text>
           <View style={styles.steps}>{recipe.steps.map((step, index) => <View key={step.id} style={styles.stepRow}>
             <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}><Text style={[styles.stepNumberText, { color: colors.onPrimary }]}>{index + 1}</Text></View>
-            <Text style={[styles.stepText, { color: colors.text }, textDirection]}>{convertTemperatures(step.text, unitSystem)}</Text>
+            <Text style={[styles.stepText, { color: colors.text }]}>{convertTemperatures(step.text, unitSystem)}</Text>
           </View>)}</View>
 
           {notes.length > 0 && <View style={styles.extra}>
@@ -171,7 +201,7 @@ export default function RecipeDetailScreen() {
               <Text style={[styles.description, { color: colors.text }]}>{entry.note}</Text>
             </View>)}
           </View>}
-          {!!recipe.notes.length && <View style={styles.extra}><Text style={[styles.sectionTitle, { color: colors.text }]}>{t('notes')}</Text>{recipe.notes.map((note, index) => <Text key={`${index}-${note}`} style={[styles.description, { color: colors.muted }, textDirection]}>{note}</Text>)}</View>}
+          {!!recipe.notes.length && <View style={styles.extra}><Text style={[styles.sectionTitle, { color: colors.text }]}>{t('notes')}</Text>{recipe.notes.map((note, index) => <Text key={`${index}-${note}`} style={[styles.description, { color: colors.muted }]}>{note}</Text>)}</View>}
           {!!(recipe.sourceName || recipe.sourceUrl) && <View style={[styles.source, { borderColor: colors.line }]}><Text style={[styles.sourceLabel, { color: colors.muted }]}>{t('source')}</Text><Text style={[styles.sourceText, { color: colors.primaryText }]}>{recipe.sourceName ?? recipe.sourceUrl}</Text></View>}
           {!!recipe.warnings.length && <View style={[styles.warning, { backgroundColor: colors.warningBg }]}><Text style={{ color: colors.warningText, fontWeight: '700', marginBottom: 5 }}>{t('checkDetails')}</Text>{recipe.warnings.map((warning, index) => <Text key={index} style={{ color: colors.warningText, fontSize: 12, lineHeight: 18 }}>{warning}</Text>)}</View>}
 
@@ -212,6 +242,8 @@ const styles = StyleSheet.create({
   stepText: { flex: 1, fontSize: 16, lineHeight: 25, paddingTop: 2 },
   extra: { gap: 8 }, source: { borderTopWidth: 1, paddingTop: 14, gap: 5 }, sourceLabel: { fontSize: 12 }, sourceText: { fontSize: 13, fontWeight: '600' },
   warning: { borderRadius: 16, padding: 14 },
+  translationNote: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
+  translationText: { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '600' }, translationRetry: { fontSize: 13, fontWeight: '800' },
   bottomActions: { flexDirection: 'row', gap: 10, marginTop: 6 },
   cooked: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 12 },
   cookedText: { fontSize: 13, fontWeight: '600' },

@@ -41,7 +41,6 @@ export default function RootLayout() {
           <Stack.Screen name="import-review" options={{ title: '', headerBackTitle: ' ' }} />
           <Stack.Screen name="profile" options={{ title: '', headerBackTitle: ' ' }} />
           <Stack.Screen name="billing" options={{ title: '', headerBackTitle: ' ' }} />
-          <Stack.Screen name="recipe/[id]" options={{ headerShown: false }} />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>

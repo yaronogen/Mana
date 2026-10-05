@@ -1,5 +1,5 @@
 import { formatIngredient } from './ingredientText';
-import { createId, type Ingredient, type Recipe } from './recipe';
+import { createId, type Recipe } from './recipe';
 import { convertIngredient, type UnitSystem } from './units';
 
 /**
@@ -17,11 +17,6 @@ export type GroceryItem = {
 };
 
 export type GroceryGroup = { recipeId: string | null; recipeTitle: string | null; items: GroceryItem[] };
-
-/** Ingredients preselected in the "add to list" sheet: everything except optional extras. */
-export function defaultGrocerySelection(ingredients: Ingredient[]): Set<string> {
-  return new Set(ingredients.filter((item) => !item.isOptional).map((item) => item.id));
-}
 
 /** In a converted amount, the recipe's own amount follows in brackets: "7 oz flour (200 g)". */
 export function groceryItemsFromRecipe(recipe: Recipe, ingredientIds: Iterable<string>, options: { optionalLabel?: string; unitSystem?: UnitSystem; now?: Date } = {}): GroceryItem[] {

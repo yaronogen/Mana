@@ -2,24 +2,24 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { mealSuggestions, mealTimeFor, type MealTime } from '../domain/mealTime';
 import { dislikedIngredients, matchesFavoriteCuisine, profileConflicts } from '../domain/personalization';
 import { useProfile } from '../stores/profile';
 import type { Recipe } from '../domain/recipe';
 import { useManaTheme } from '../theme/useManaTheme';
-import { Icon, type IconName } from './Icon';
+import { Icon } from './Icon';
 import { ManaButton } from './ManaButton';
 import { RecipeImage } from './RecipeImage';
 import { Text } from './Typography';
 
-const meal: Record<MealTime, { greeting: string; label: string; icon: IconName }> = {
-  breakfast: { greeting: 'goodMorning', label: 'mealBreakfast', icon: 'sun' },
-  lunch: { greeting: 'goodAfternoon', label: 'mealLunch', icon: 'sun' },
-  afternoon: { greeting: 'goodAfternoon', label: 'mealAfternoon', icon: 'sun' },
-  dinner: { greeting: 'goodEvening', label: 'mealDinner', icon: 'moon' },
-  lateNight: { greeting: 'goodNight', label: 'mealLateNight', icon: 'moon' },
+const meal: Record<MealTime, { greeting: string; label: string }> = {
+  breakfast: { greeting: 'goodMorning', label: 'mealBreakfast' },
+  lunch: { greeting: 'goodAfternoon', label: 'mealLunch' },
+  afternoon: { greeting: 'goodAfternoon', label: 'mealAfternoon' },
+  dinner: { greeting: 'goodEvening', label: 'mealDinner' },
+  lateNight: { greeting: 'goodNight', label: 'mealLateNight' },
 };
 
 /** Suggests what to cook for the current local meal time, with "Another idea" to step through the matches. */
@@ -39,7 +39,7 @@ export function MealSuggestionCard({ recipes }: { recipes: Recipe[] }) {
   useEffect(() => setIndex(0), [mealTime, suggestions.length]);
   if (!suggestions.length) return null;
   const recipe = suggestions[index % suggestions.length];
-  const { greeting, label, icon } = meal[mealTime];
+  const { greeting, label } = meal[mealTime];
 
   const next = () => {
     setIndex((value) => value + 1);
@@ -52,7 +52,7 @@ export function MealSuggestionCard({ recipes }: { recipes: Recipe[] }) {
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.line }]}>
       <View style={styles.head}>
-        <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}><Icon name={icon} color={colors.accentText} size={22} /></View>
+        <Image source={require('../../assets/images/icon.png')} style={styles.icon} accessibilityIgnoresInvertColors />
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={[styles.title, { color: colors.text }]}>{t(greeting)}{profile.name ? `, ${profile.name}` : ''} · {t(label)}</Text>
           <Text style={[styles.body, { color: colors.muted }]}>{fallback ? t('noMealMatch') : t('howAbout')}</Text>
@@ -78,7 +78,7 @@ export function MealSuggestionCard({ recipes }: { recipes: Recipe[] }) {
 const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 18, padding: 16, gap: 14 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  icon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 48, height: 48, borderRadius: 14 },
   title: { fontSize: 16, fontWeight: '700' }, body: { fontSize: 13, lineHeight: 18 },
   result: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, padding: 10, minHeight: 84 },
   thumb: { width: 64, height: 64, borderRadius: 12 },

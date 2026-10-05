@@ -6,8 +6,10 @@ import { AppHeader } from '../../src/components/AppHeader';
 import { Icon } from '../../src/components/Icon';
 import { Screen } from '../../src/components/Screen';
 import { Text, TextInput } from '../../src/components/Typography';
-import { addGroceries, clearCheckedGroceries, deleteGrocery, getGroceries, setGroceryChecked } from '../../src/data/database';
+import { addGroceries, clearCheckedGroceries, deleteGrocery, getGroceries, getRecipes, setGroceryChecked } from '../../src/data/database';
 import { formatGroceryShare, groupGroceries, manualGroceryItem, type GroceryItem } from '../../src/domain/groceries';
+import { usePreferences } from '../../src/stores/preferences';
+import { useTranslations } from '../../src/stores/translations';
 import { useManaTheme } from '../../src/theme/useManaTheme';
 
 export default function GroceriesScreen() {
@@ -16,13 +18,18 @@ export default function GroceriesScreen() {
   const router = useRouter();
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [draft, setDraft] = useState('');
+  // Current recipe titles in the app language; the title saved with each item is the fallback (e.g. a deleted recipe).
+  const [titles, setTitles] = useState<Map<string, string>>(new Map());
+  const language = usePreferences((state) => state.language);
+  const translationVersion = useTranslations((state) => state.version);
 
   const reload = useCallback(async () => { setItems(await getGroceries()); }, []);
   useFocusEffect(useCallback(() => {
     let active = true;
     void getGroceries().then((result) => { if (active) setItems(result); }).catch(() => { if (active) setItems([]); });
+    void getRecipes({ language }).then((recipes) => { if (active) setTitles(new Map(recipes.map((recipe) => [recipe.id, recipe.title]))); }).catch(() => undefined);
     return () => { active = false; };
-  }, []));
+  }, [language, translationVersion]));
 
   const addDraft = async () => {
     const item = manualGroceryItem(draft);
@@ -73,7 +80,7 @@ export default function GroceriesScreen() {
           {group.recipeId && group.recipeTitle ? (
             <Pressable accessibilityRole="link" onPress={() => router.push(`/recipe/${group.recipeId}`)} hitSlop={6} style={styles.groupHead}>
               <Icon name="restaurant" color={colors.primaryText} size={14} />
-              <Text numberOfLines={1} style={[styles.groupTitle, { color: colors.primaryText }]}>{group.recipeTitle}</Text>
+              <Text numberOfLines={1} style={[styles.groupTitle, { color: colors.primaryText }]}>{titles.get(group.recipeId) ?? group.recipeTitle}</Text>
             </Pressable>
           ) : <Text style={[styles.groupTitle, { color: colors.muted }]}>{t('myItems')}</Text>}
           <View style={[styles.list, { backgroundColor: colors.surface, borderColor: colors.line }]}>

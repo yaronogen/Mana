@@ -13,6 +13,7 @@ import { getRecipes } from '../../src/data/database';
 import { RECIPE_CATEGORIES, type Recipe } from '../../src/domain/recipe';
 import { categoryLabels } from '../../src/i18n/resources';
 import { usePreferences } from '../../src/stores/preferences';
+import { useTranslations } from '../../src/stores/translations';
 import { useManaTheme } from '../../src/theme/useManaTheme';
 
 // Home answers "what should I cook today?"; the Recipes tab is the full, searchable library.
@@ -23,11 +24,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
 
+  const translationVersion = useTranslations((state) => state.version);
+
   useFocusEffect(useCallback(() => {
     let active = true;
-    void getRecipes().then((items) => { if (active) setRecipes(items); }).catch(() => { if (active) setRecipes([]); });
+    void getRecipes({ language }).then((items) => { if (active) setRecipes(items); }).catch(() => { if (active) setRecipes([]); });
     return () => { active = false; };
-  }, []));
+  }, [language, translationVersion]));
 
   const favorites = recipes.filter((recipe) => recipe.favorite);
   const categories = RECIPE_CATEGORIES
