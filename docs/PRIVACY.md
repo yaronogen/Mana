@@ -1,5 +1,7 @@
 # Mana privacy notes (implementation draft)
 
+The published, user-facing policy is [privacy.html](privacy.html) (https://yaronogen.github.io/Mana/privacy.html); keep both in step.
+
 ## Data stored on-device
 
 - Recipes, ingredients, preparation steps, notes, tags, favorites, source metadata, and app preferences are stored in the local SQLite database.
