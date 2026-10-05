@@ -6,6 +6,7 @@ import { AppHeader } from '../../src/components/AppHeader';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { Screen } from '../../src/components/Screen';
 import type { AppLanguage } from '../../src/domain/recipe';
+import type { UnitSystem } from '../../src/domain/units';
 import { usePreferences, type Appearance } from '../../src/stores/preferences';
 import { useProfile } from '../../src/stores/profile';
 import { useManaTheme } from '../../src/theme/useManaTheme';
@@ -21,10 +22,16 @@ export default function SettingsScreen() {
   const appearance = usePreferences((state) => state.appearance);
   const setLanguage = usePreferences((state) => state.setLanguage);
   const setAppearance = usePreferences((state) => state.setAppearance);
+  const unitSystem = usePreferences((state) => state.unitSystem);
+  const setUnitSystem = usePreferences((state) => state.setUnitSystem);
   const name = useProfile((state) => state.profile.name);
   const router = useRouter();
   const appearances: { value: Appearance; label: string; icon: IconName }[] = [
     { value: 'system', label: t('system'), icon: 'system' }, { value: 'light', label: t('light'), icon: 'sun' }, { value: 'dark', label: t('dark'), icon: 'moon' },
+  ];
+
+  const unitOptions: { value: UnitSystem; label: string }[] = [
+    { value: 'original', label: t('unitsOriginal') }, { value: 'metric', label: t('unitsMetric') }, { value: 'us', label: t('unitsUs') },
   ];
 
   return (
@@ -59,6 +66,18 @@ export default function SettingsScreen() {
           </Pressable>;
         })}
       </View>
+
+      <Text style={[styles.section, { color: colors.text }]}>{t('measurements')}</Text>
+      <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+        {unitOptions.map((option, index) => {
+          const selected = unitSystem === option.value;
+          return <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected }} onPress={() => void setUnitSystem(option.value)} style={[styles.row, index < unitOptions.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.line }]}>
+            <Text style={[styles.option, { color: colors.text }]}>{option.label}</Text>
+            <View style={[styles.radio, { borderColor: selected ? colors.primary : colors.line }]}>{selected && <View style={[styles.dot, { backgroundColor: colors.primary }]} />}</View>
+          </Pressable>;
+        })}
+      </View>
+      <Text style={[styles.helper, { color: colors.muted }]}>{t('unitsHint')}</Text>
 
       <Text style={[styles.section, { color: colors.text }]}>{t('appearance')}</Text>
       <View style={styles.tiles}>

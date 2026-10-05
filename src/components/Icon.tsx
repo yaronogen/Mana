@@ -38,6 +38,10 @@ const icons = {
   person: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
   star: { ios: 'star.fill', android: 'star', web: 'star' },
   drag: { ios: 'line.3.horizontal', android: 'drag_indicator', web: 'drag_indicator' },
+  cart: { ios: 'cart', android: 'shopping_cart', web: 'shopping_cart' },
+  cartAdd: { ios: 'cart.badge.plus', android: 'add_shopping_cart', web: 'add_shopping_cart' },
+  checkSquare: { ios: 'checkmark.square.fill', android: 'check_box', web: 'check_box' },
+  square: { ios: 'square', android: 'check_box_outline_blank', web: 'check_box_outline_blank' },
 } satisfies Record<string, SymbolName>;
 
 export type IconName = keyof typeof icons;

@@ -40,6 +40,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="groceries"
+        options={{
+          title: t('groceries'),
+          tabBarIcon: ({ color }) => <SymbolView name={{ ios: 'cart.fill', android: 'shopping_cart', web: 'shopping_cart' }} tintColor={color} size={22} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: t('settings'),

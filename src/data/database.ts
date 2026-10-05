@@ -1,4 +1,5 @@
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import type { GroceryItem } from '../domain/groceries';
 import { createId, type CookLogEntry, type Recipe } from '../domain/recipe';
 
 let databasePromise: Promise<SQLiteDatabase> | undefined;
@@ -45,6 +46,14 @@ async function getDatabase(): Promise<SQLiteDatabase> {
         note TEXT
       );
       CREATE INDEX IF NOT EXISTS cook_log_recipe_idx ON cook_log(recipe_id, cooked_at DESC);
+      CREATE TABLE IF NOT EXISTS grocery_items (
+        id TEXT PRIMARY KEY NOT NULL,
+        text TEXT NOT NULL,
+        recipe_id TEXT,
+        recipe_title TEXT,
+        checked INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
     `);
     const columns = await database.getAllAsync<{ name: string }>('PRAGMA table_info(recipes)');
     if (!columns.some((column) => column.name === 'warnings')) {
@@ -153,6 +162,42 @@ export async function getCookLog(recipeId: string): Promise<CookLogEntry[]> {
     id: String(row.id), recipeId: String(row.recipe_id), cookedAt: String(row.cooked_at),
     rating: row.rating == null ? null : Number(row.rating), note: (row.note as string | null) ?? null,
   }));
+}
+
+export async function getGroceries(): Promise<GroceryItem[]> {
+  const database = await getDatabase();
+  const rows = await database.getAllAsync<Record<string, unknown>>('SELECT * FROM grocery_items ORDER BY created_at');
+  return rows.map((row) => ({
+    id: String(row.id), text: String(row.text), recipeId: (row.recipe_id as string | null) ?? null,
+    recipeTitle: (row.recipe_title as string | null) ?? null, checked: Number(row.checked) === 1, createdAt: String(row.created_at),
+  }));
+}
+
+export async function addGroceries(items: GroceryItem[]): Promise<void> {
+  const database = await getDatabase();
+  await database.withTransactionAsync(async () => {
+    for (const item of items) {
+      await database.runAsync(
+        'INSERT INTO grocery_items (id, text, recipe_id, recipe_title, checked, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+        item.id, item.text, item.recipeId, item.recipeTitle, item.checked ? 1 : 0, item.createdAt,
+      );
+    }
+  });
+}
+
+export async function setGroceryChecked(id: string, checked: boolean): Promise<void> {
+  const database = await getDatabase();
+  await database.runAsync('UPDATE grocery_items SET checked = ? WHERE id = ?', checked ? 1 : 0, id);
+}
+
+export async function deleteGrocery(id: string): Promise<void> {
+  const database = await getDatabase();
+  await database.runAsync('DELETE FROM grocery_items WHERE id = ?', id);
+}
+
+export async function clearCheckedGroceries(): Promise<void> {
+  const database = await getDatabase();
+  await database.runAsync('DELETE FROM grocery_items WHERE checked = 1');
 }
 
 export async function getSetting(key: string): Promise<string | null> {

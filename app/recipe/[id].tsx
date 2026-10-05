@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { Text } from '../../src/components/Typography';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AddToGroceriesSheet } from '../../src/components/AddToGroceriesSheet';
 import { CookedSheet, Stars, describeWhen } from '../../src/components/CookedSheet';
 import { HeadsUp } from '../../src/components/HeadsUp';
 import { Icon } from '../../src/components/Icon';
@@ -11,7 +12,9 @@ import { ManaButton } from '../../src/components/ManaButton';
 import { choosePhotoAction } from '../../src/components/photoActions';
 import { RecipeImage } from '../../src/components/RecipeImage';
 import { Screen } from '../../src/components/Screen';
-import { getCookLog, getRecipe, logCook, toggleFavorite } from '../../src/data/database';
+import { addGroceries, getCookLog, getRecipe, logCook, toggleFavorite } from '../../src/data/database';
+import { groceryItemsFromRecipe } from '../../src/domain/groceries';
+import { convertIngredient, convertTemperatures } from '../../src/domain/units';
 import { formatIngredient } from '../../src/domain/ingredientText';
 import type { CookLogEntry, Recipe } from '../../src/domain/recipe';
 import { categoryLabels, resources } from '../../src/i18n/resources';
@@ -25,10 +28,12 @@ export default function RecipeDetailScreen() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [cookLog, setCookLog] = useState<CookLogEntry[]>([]);
   const [cookSheet, setCookSheet] = useState(false);
+  const [grocerySheet, setGrocerySheet] = useState(false);
   const [loading, setLoading] = useState(true);
   const { colors } = useManaTheme();
   const { t } = useTranslation();
   const language = usePreferences((state) => state.language);
+  const unitSystem = usePreferences((state) => state.unitSystem);
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -54,6 +59,14 @@ export default function RecipeDetailScreen() {
     await logCook(recipe.id, rating, note);
     setRecipe(await getRecipe(recipe.id));
     setCookLog(await getCookLog(recipe.id));
+  };
+  const addToGroceries = async (ingredientIds: string[]) => {
+    await addGroceries(groceryItemsFromRecipe(recipe, ingredientIds, { optionalLabel: resources[recipe.outputLanguage].optional, unitSystem }));
+    setGrocerySheet(false);
+    Alert.alert(t('addedToListTitle'), t('addedToListBody', { n: ingredientIds.length }), [
+      { text: t('continue'), style: 'cancel' },
+      { text: t('viewList'), onPress: () => router.push('/(tabs)/groceries') },
+    ]);
   };
   const notes = cookLog.filter((entry) => entry.note);
   const changePhoto = async () => {
@@ -129,16 +142,23 @@ export default function RecipeDetailScreen() {
 
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('ingredients')} <Text style={[styles.count, { color: colors.muted }]}>({recipe.ingredients.length})</Text></Text>
           <View style={[styles.ingredientList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-            {recipe.ingredients.map((ingredient, index) => <View key={ingredient.id} style={[styles.ingredientRow, index < recipe.ingredients.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.line }]}>
-              <View style={[styles.ingredientDot, { backgroundColor: colors.primarySoft }]}><Icon name="asterisk" color={colors.primaryText} size={12} /></View>
-              <Text style={[styles.ingredientText, { color: colors.text }, textDirection]}>{formatIngredient(ingredient, resources[recipe.outputLanguage].optional)}</Text>
-            </View>)}
+            {recipe.ingredients.map((ingredient, index) => {
+              const converted = convertIngredient(ingredient, unitSystem, recipe.outputLanguage);
+              return <View key={ingredient.id} style={[styles.ingredientRow, index < recipe.ingredients.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.line }]}>
+                <View style={[styles.ingredientDot, { backgroundColor: colors.primarySoft }]}><Icon name="asterisk" color={colors.primaryText} size={12} /></View>
+                <View style={styles.ingredientBody}>
+                  <Text style={[styles.ingredientText, { color: colors.text }, textDirection]}>{formatIngredient(converted.ingredient, resources[recipe.outputLanguage].optional)}</Text>
+                  {converted.original && <Text style={[styles.originalAmount, { color: colors.muted }, textDirection]}>{converted.original}</Text>}
+                </View>
+              </View>;
+            })}
           </View>
+          {recipe.ingredients.length > 0 && <ManaButton title={t('addToShoppingList')} onPress={() => setGrocerySheet(true)} secondary icon={<Icon name="cartAdd" color={colors.primaryText} size={18} />} />}
 
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('preparation')} <Text style={[styles.count, { color: colors.muted }]}>({recipe.steps.length})</Text></Text>
           <View style={styles.steps}>{recipe.steps.map((step, index) => <View key={step.id} style={styles.stepRow}>
             <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}><Text style={[styles.stepNumberText, { color: colors.onPrimary }]}>{index + 1}</Text></View>
-            <Text style={[styles.stepText, { color: colors.text }, textDirection]}>{step.text}</Text>
+            <Text style={[styles.stepText, { color: colors.text }, textDirection]}>{convertTemperatures(step.text, unitSystem)}</Text>
           </View>)}</View>
 
           {notes.length > 0 && <View style={styles.extra}>
@@ -162,6 +182,7 @@ export default function RecipeDetailScreen() {
         </View>
       </ScrollView>
       <CookedSheet visible={cookSheet} onClose={() => setCookSheet(false)} onSave={saveCook} />
+      <AddToGroceriesSheet recipe={recipe} visible={grocerySheet} onClose={() => setGrocerySheet(false)} onAdd={addToGroceries} />
     </View>
   );
 }
@@ -185,7 +206,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 19, fontWeight: '700', marginTop: 8 }, count: { fontSize: 14, fontWeight: '500' },
   ingredientList: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 14 },
   ingredientRow: { minHeight: 50, flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11 },
-  ingredientDot: { height: 22, width: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center' }, ingredientText: { flex: 1, fontSize: 15, lineHeight: 22 },
+  ingredientDot: { height: 22, width: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center' }, ingredientBody: { flex: 1, gap: 1 }, ingredientText: { fontSize: 15, lineHeight: 22 }, originalAmount: { fontSize: 12 },
   steps: { gap: 16 }, stepRow: { flexDirection: 'row', gap: 13, alignItems: 'flex-start' },
   stepNumber: { height: 30, width: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' }, stepNumberText: { fontSize: 13, fontWeight: '700' },
   stepText: { flex: 1, fontSize: 16, lineHeight: 25, paddingTop: 2 },

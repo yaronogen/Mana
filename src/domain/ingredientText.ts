@@ -1,10 +1,10 @@
 import { createId, type Ingredient } from './recipe';
 
-const UNITS = new Set(['g', 'kg', 'mg', 'ml', 'l', 'cl', 'dl', 'cup', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'lbs', 'el', 'tl', 'prise', 'prisen', 'stück', 'stk', 'gramm', 'kilogramm', 'milliliter', 'teelöffel', 'esslöffel', 'כף', 'כפית', 'גרם', 'מ״ל']);
+const UNITS = new Set(['g', 'kg', 'mg', 'ml', 'l', 'cl', 'dl', 'cup', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'lbs', 'el', 'tl', 'prise', 'prisen', 'stück', 'stk', 'gramm', 'kilogramm', 'milliliter', 'teelöffel', 'esslöffel', 'כף', 'כפית', 'גרם', 'מ״ל', 'gr', 'gram', 'grams', 'kilo', 'kilogram', 'kilograms', 'ounce', 'ounces', 'pound', 'pounds', 'liter', 'liters', 'litre', 'litres', 'pint', 'pints', 'quart', 'quarts', 'pfund', 'liter', 'כוס', 'כוסות', 'כפות', 'כפיות', 'ק״ג', 'ליטר']);
 const amountPattern = '(?:\\d+\\s+)?(?:\\d+(?:[.,]\\d+)?|\\d+\\/\\d+|[½¼¾⅓⅔⅛⅜⅝⅞])';
 const QUANTITY = new RegExp(`^(${amountPattern}(?:\\s*(?:-|–|to)\\s*${amountPattern})?)(?:\\s+([^\\s]+))?(?:\\s+(.+))?$`, 'u');
 
-function numericQuantity(value: string): number | null {
+export function numericQuantity(value: string): number | null {
   const simple = value.trim().replace(',', '.');
   if (/^\d+(?:\.\d+)?$/.test(simple)) return Number(simple);
   const mixedFraction = simple.match(/^(\d+)\s+(\d+)\/(\d+)$/);
