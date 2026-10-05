@@ -11,7 +11,7 @@ import { avoidedLabels } from '../src/components/HeadsUp';
 import { confirmAction } from '../src/components/confirmDuplicate';
 import { Screen } from '../src/components/Screen';
 import { RecipeImportError, parseRecipeText } from '../src/services/ai/recipeParser';
-import { fetchImportUsage, type ImportUsage } from '../src/services/billing/plan';
+import { fetchImportUsage, PREMIUM_VISIBLE, type ImportUsage } from '../src/services/billing/plan';
 import { extractRecipeUrl } from '../src/services/import/webRecipe';
 import { useImportDraft } from '../src/stores/importDraft';
 import { usePreferences } from '../src/stores/preferences';
@@ -76,7 +76,7 @@ export default function PasteRecipeScreen() {
       {error ? <View style={[styles.note, { backgroundColor: colors.warningBg }]}>
         <View style={{ flex: 1, gap: 10 }}>
           <Text style={[styles.noteText, { color: colors.warningText }]}>{error}</Text>
-          {error === t('importLimit') && <Pressable accessibilityRole="button" onPress={() => router.push('/billing')} style={styles.linkButton}><Text style={[styles.manualLink, { color: colors.primaryText }]}>{t('seePlans')} →</Text></Pressable>}
+          {PREMIUM_VISIBLE && error === t('importLimit') && <Pressable accessibilityRole="button" onPress={() => router.push('/billing')} style={styles.linkButton}><Text style={[styles.manualLink, { color: colors.primaryText }]}>{t('seePlans')} →</Text></Pressable>}
           {error === t('importUnavailable') && <Pressable onPress={() => router.push('/editor')}><Text style={[styles.manualLink, { color: colors.primaryText }]}>{t('writeRecipe')} →</Text></Pressable>}
         </View>
       </View> : isLink ? <View style={[styles.note, { backgroundColor: colors.primarySoft }]}>

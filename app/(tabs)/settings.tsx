@@ -8,6 +8,7 @@ import { Screen } from '../../src/components/Screen';
 import type { AppLanguage } from '../../src/domain/recipe';
 import type { UnitSystem } from '../../src/domain/units';
 import { usePreferences, type Appearance } from '../../src/stores/preferences';
+import { PREMIUM_VISIBLE } from '../../src/services/billing/plan';
 import { useProfile } from '../../src/stores/profile';
 import { useManaTheme } from '../../src/theme/useManaTheme';
 
@@ -47,14 +48,14 @@ export default function SettingsScreen() {
         </View>
         <Icon name="chevron" color={colors.text} size={18} />
       </Pressable>
-      <Pressable accessibilityRole="button" onPress={() => router.push('/billing')} style={({ pressed }) => [styles.profileRow, { backgroundColor: colors.surface, borderColor: colors.line, opacity: pressed ? 0.85 : 1 }]}>
+      {PREMIUM_VISIBLE && <Pressable accessibilityRole="button" onPress={() => router.push('/billing')} style={({ pressed }) => [styles.profileRow, { backgroundColor: colors.surface, borderColor: colors.line, opacity: pressed ? 0.85 : 1 }]}>
         <View style={[styles.profileIcon, { backgroundColor: colors.accentSoft }]}><Icon name="star" color={colors.accentText} size={20} /></View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={[styles.option, { color: colors.text, fontWeight: '700' }]}>{t('planAndBilling')}</Text>
           <Text style={[styles.profileHint, { color: colors.muted }]}>{t('freeFeature1')}</Text>
         </View>
         <Icon name="chevron" color={colors.text} size={18} />
-      </Pressable>
+      </Pressable>}
 
       <Text style={[styles.section, { color: colors.text }]}>{t('language')}</Text>
       <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.line }]}>

@@ -9,6 +9,12 @@ export const PLANS = {
 
 export type PlanId = keyof typeof PLANS;
 
+/**
+ * Whether Plan & billing and "Upgrade to Premium" are shown. Off until App Store in-app purchases are
+ * implemented: App Review rejects purchase buttons that don't work. The server-side monthly limits still apply.
+ */
+export const PREMIUM_VISIBLE = false;
+
 const usageSchema = z.object({
   plan: z.enum(['free', 'premium']),
   used: z.number().int().nonnegative(),
