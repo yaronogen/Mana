@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recipe shared with Mana</title>
+  <meta name="description" content="A recipe was shared with you in Mana, the personal cookbook app.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="../icon.png">
+  <link rel="stylesheet" href="../site.css">
+  <style>
+    [hidden] { display: none !important; }
+    .actions { display: grid; gap: 12px; margin: 24px 0; }
+    .button { display: block; text-align: center; padding: 15px 20px; border-radius: 18px; font-weight: 700; text-decoration: none; }
+    .button.primary { background: #385943; color: #FFFFFF; }
+    .button.secondary { background: var(--primary-soft); color: var(--primary); }
+    @media (prefers-color-scheme: dark) { .button.primary { background: #3E6549; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a href="../"><img src="../icon.png" alt="Mana"></a>
+      <div><div class="brand">Mana</div><div class="tagline" data-text="tagline">Where your recipes feel at home</div></div>
+    </header>
+
+    <h1 data-text="title">A recipe was shared with you</h1>
+    <p data-text="body">Open it in Mana to see it in your language and save it to your cookbook.</p>
+    <div class="actions">
+      <a class="button primary" id="open" href="../" data-text="open">Open in Mana</a>
+      <a class="button secondary" href="https://apps.apple.com/app/id6819307171" data-text="get">Get Mana on the App Store</a>
+    </div>
+    <p class="muted" id="invalid" hidden data-text="invalid">This link is incomplete. Ask for the recipe to be shared again.</p>
+
+    <footer>© 2026 Yaron Ogen · <a href="../privacy.html" data-text="privacy">Privacy Policy</a></footer>
+  </div>
+  <script>
+    // Opens mana://r/<code> in the app. The recipe itself is only ever read by the app, never by this page.
+    (function () {
+      var copy = {
+        de: { tagline: 'Wo deine Rezepte zu Hause sind', title: 'Jemand hat ein Rezept mit dir geteilt', body: 'Öffne es in Mana, um es in deiner Sprache zu sehen und in deinem Kochbuch zu speichern.',
+          open: 'In Mana öffnen', get: 'Mana im App Store laden', invalid: 'Dieser Link ist unvollständig. Bitte lass dir das Rezept erneut schicken.', privacy: 'Datenschutzerklärung' },
+        he: { tagline: 'המקום שבו המתכונים שלך מרגישים בבית', title: 'שיתפו איתך מתכון', body: 'פתחו אותו ב-Mana כדי לראות אותו בשפה שלכם ולשמור אותו בספר המתכונים.',
+          open: 'פתיחה ב-Mana', get: 'להורדת Mana מה-App Store', invalid: 'הקישור חלקי. בקשו לשתף את המתכון שוב.', privacy: 'מדיניות פרטיות' },
+      };
+      var language = (navigator.language || 'en').slice(0, 2).toLowerCase();
+      if (language === 'iw') language = 'he';
+      if (copy[language]) {
+        document.documentElement.lang = language;
+        if (language === 'he') document.documentElement.dir = 'rtl';
+        document.querySelectorAll('[data-text]').forEach(function (node) { node.textContent = copy[language][node.getAttribute('data-text')]; });
+        document.title = copy[language].title;
+      }
+      var code = new URLSearchParams(location.search).get('c') || '';
+      if (!/^[A-Za-z0-9]{10}$/.test(code)) {
+        document.getElementById('open').hidden = true;
+        document.getElementById('invalid').hidden = false;
+        return;
+      }
+      var appLink = 'mana://r/' + code;
+      document.getElementById('open').href = appLink;
+      // Try once automatically; the button stays for browsers that wait for a tap.
+      location.href = appLink;
+    })();
+  </script>
+</body>
+</html>

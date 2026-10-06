@@ -45,6 +45,7 @@ export default function RootLayout() {
           <Stack.Screen name="import-review" options={{ title: '' }} />
           <Stack.Screen name="profile" options={{ title: '' }} />
           <Stack.Screen name="billing" options={{ title: '' }} />
+          <Stack.Screen name="r/[code]" options={{ title: '' }} />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>

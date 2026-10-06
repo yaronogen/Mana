@@ -15,6 +15,8 @@ When a user submits pasted text for AI import, Mana sends only that text and the
 
 When a user submits a recipe link, the link and target language are sent to the function, which downloads that page from its public server. Only the extracted recipe facts (or capped readable page text when the page has no structured recipe data) are sent to the model provider, and nothing is sent to the provider when the recipe is already in the requested language. The downloaded page is not stored or logged. When the page names a recipe photo, the function returns only its URL; the phone then downloads that one image directly from the website, so the website sees the device's network address for that request.
 
+When a user sends a recipe to another Mana user, the app uploads that recipe (wording, quantities, times, attribution and a web photo URL if it has one; never ratings, cook notes, favorites or on-device photos) to the function, which stores it in `shared_recipes` under a random 10-character code with the anonymous creator id. The row expires after 90 days and expired rows are deleted when new links are created; each user may create 50 links per day. Anyone with the code can retrieve the recipe through the authenticated function. The recipient's app validates it with Zod and translates it with the normal `translate` action when the languages differ.
+
 The function does not log request bodies or provider response content. Supabase and the model provider may process operational metadata under their service terms. Configure and verify provider retention/training settings before production use, and include the resulting disclosure in the published privacy policy and Apple/Google privacy forms.
 
 ## Security boundaries and remaining release work

@@ -21,6 +21,7 @@ import type { CookLogEntry, Recipe } from '../../../src/domain/recipe';
 import { categoryLabels, resources } from '../../../src/i18n/resources';
 import { deleteRecipeWithImage, pickRecipeImage, saveRecipeWithImage } from '../../../src/services/images/recipeImages';
 import { formatRecipeShare } from '../../../src/services/sharing/formatRecipeShare';
+import { createRecipeLink, RecipeLinkError } from '../../../src/services/sharing/recipeLinks';
 import { usePreferences } from '../../../src/stores/preferences';
 import { useProfile } from '../../../src/stores/profile';
 import { useTranslations } from '../../../src/stores/translations';
@@ -34,6 +35,7 @@ export default function RecipeDetailScreen() {
   const [cookLog, setCookLog] = useState<CookLogEntry[]>([]);
   const [cookSheet, setCookSheet] = useState(false);
   const [rateSheet, setRateSheet] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [servingsChoice, setServingsChoice] = useState<{ id: string; n: number } | null>(null);
   const householdSize = useProfile((state) => state.profile.householdSize);
   const [grocerySheet, setGrocerySheet] = useState(false);
@@ -79,7 +81,25 @@ export default function RecipeDetailScreen() {
   const untranslated = recipe.outputLanguage !== language;
   const translationNote = translatingThis ? t('translatingRecipe')
     : translationStatus === 'limit' ? t('translationLimit') : translationStatus === 'unavailable' ? t('translationUnavailable') : t('shownInOriginal');
-  const share = async () => { await Share.share({ message: formatRecipeShare(recipe) }); };
+  const shareAsText = async () => { await Share.share({ message: formatRecipeShare(recipe) }); };
+  // The link carries the stored recipe, not this translated view; the recipient's app translates it once.
+  const shareWithManaUser = async () => {
+    setSharing(true);
+    try {
+      const link = await createRecipeLink(saved);
+      await Share.share({ message: t('shareLinkMessage', { title: recipe.title, link }) });
+    } catch (caught) {
+      const code = caught instanceof RecipeLinkError ? caught.code : 'network';
+      Alert.alert(t('share'), code === 'rate_limited' ? t('shareLimit') : code === 'invalid_recipe' ? t('shareTooLong') : code === 'not_configured' ? t('importUnavailable') : t('shareLinkFailed'));
+    } finally {
+      setSharing(false);
+    }
+  };
+  const share = () => Alert.alert(t('shareHow'), undefined, [
+    { text: t('shareToMana'), onPress: () => void shareWithManaUser() },
+    { text: t('shareAsText'), onPress: () => void shareAsText() },
+    { text: t('cancel'), style: 'cancel' },
+  ]);
   const favorite = async () => { await toggleFavorite(recipe.id); await reload(); };
   const saveCook = async (rating: number | null, note: string | null) => {
     await logCook(recipe.id, rating, note);
@@ -135,7 +155,8 @@ export default function RecipeDetailScreen() {
             <Pressable accessibilityRole="button" accessibilityLabel={t('favorite')} accessibilityState={{ selected: recipe.favorite }} onPress={() => void favorite()} hitSlop={6} style={[styles.circle, { backgroundColor: colors.surface }]}>
               <Icon name={recipe.favorite ? 'heartFill' : 'heart'} color={recipe.favorite ? colors.accentText : colors.text} size={19} />
             </Pressable>
-            {circle('share', t('share'), () => void share())}
+            {sharing ? <View style={[styles.circle, { backgroundColor: colors.surface }]}><ActivityIndicator size="small" color={colors.text} /></View>
+              : circle('share', t('share'), share)}
           </View>
           <Pressable accessibilityRole="button" onPress={() => void changePhoto()} style={[styles.photoButton, { backgroundColor: colors.surface }]}>
             <Icon name="camera" color={colors.primaryText} size={16} />

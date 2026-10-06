@@ -12,6 +12,25 @@ const languages: Record<string, string> = { en: 'English', de: 'German', he: 'He
 const maxCharacters = 30_000;
 const minPageTextCharacters = 120;
 
+const maxSharedRecipeCharacters = 60_000;
+
+/** Ten random letters and digits for a share link (62^10 possibilities). */
+function shareCode(): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  // 256 is not a multiple of 62; the slight bias is irrelevant for unguessable link codes.
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('');
+}
+
+function isSharedRecipeShape(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const recipe = value as Record<string, unknown>;
+  return typeof recipe.title === 'string' && recipe.title.trim().length > 0 && recipe.title.length <= 140
+    && typeof recipe.outputLanguage === 'string' && !!languages[recipe.outputLanguage]
+    && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && recipe.ingredients.length <= 100
+    && Array.isArray(recipe.steps) && recipe.steps.length > 0 && recipe.steps.length <= 80;
+}
+
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
   status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
 });
@@ -33,7 +52,31 @@ Deno.serve(async (request) => {
 
     const requestBody: unknown = await request.json();
     if (!requestBody || typeof requestBody !== 'object') return json(400, { error: 'invalid_request' });
-    const body = requestBody as { action?: unknown; text?: unknown; url?: unknown; targetLanguage?: unknown; content?: unknown };
+    const body = requestBody as { action?: unknown; text?: unknown; url?: unknown; targetLanguage?: unknown; content?: unknown; recipe?: unknown; code?: unknown };
+
+    // Stores a copy of a recipe for another Mana user and returns its link code. Does not consume an import.
+    // The receiving app validates the recipe fully (Zod) before showing it; this is a shape and size check.
+    if (body.action === 'share') {
+      if (!isSharedRecipeShape(body.recipe)) return json(400, { error: 'invalid_request' });
+      if (JSON.stringify(body.recipe).length > maxSharedRecipeCharacters) return json(413, { error: 'text_too_long' });
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const code = shareCode();
+      const { data: allowed, error: shareError } = await admin.rpc('create_shared_recipe', { p_user_id: user.id, p_code: code, p_recipe: body.recipe });
+      if (shareError) return json(503, { error: 'service_unavailable' });
+      if (!allowed) return json(429, { error: 'share_limit_reached' });
+      return json(200, { code });
+    }
+
+    // Returns a shared recipe by its link code, while the link has not expired.
+    if (body.action === 'receive') {
+      if (typeof body.code !== 'string' || !/^[A-Za-z0-9]{10}$/.test(body.code)) return json(404, { error: 'not_found' });
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: shared, error: receiveError } = await admin.from('shared_recipes').select('recipe')
+        .eq('code', body.code).gt('expires_at', new Date().toISOString()).maybeSingle();
+      if (receiveError) return json(503, { error: 'service_unavailable' });
+      if (!shared) return json(404, { error: 'not_found' });
+      return json(200, { recipe: shared.recipe });
+    }
 
     // Plan and monthly usage for the billing screen; does not consume an import.
     if (body.action === 'usage') {
