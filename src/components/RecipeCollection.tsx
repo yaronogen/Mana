@@ -1,10 +1,11 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from './Typography';
 import { getRecipes, toggleFavorite } from '../data/database';
 import { RECIPE_CATEGORIES, type Recipe } from '../domain/recipe';
+import { MAX_COOKBOOK_RECIPES } from '../services/cookbook/cookbookHtml';
 import { categoryLabels } from '../i18n/resources';
 import { usePreferences } from '../stores/preferences';
 import { useTranslations } from '../stores/translations';
@@ -30,6 +31,20 @@ export function RecipeCollection({ favoritesOnly = false }: { favoritesOnly?: bo
   const [loading, setLoading] = useState(true);
   const translationVersion = useTranslations((state) => state.version);
   const translating = useTranslations((state) => Object.keys(state.pending).length > 0);
+  // Select mode picks recipes for "My cookbook" (a printable PDF), in the order they are tapped.
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const stopSelecting = () => { setSelecting(false); setSelected([]); };
+  const toggleSelected = (id: string) => setSelected((current) => {
+    if (current.includes(id)) return current.filter((item) => item !== id);
+    if (current.length >= MAX_COOKBOOK_RECIPES) { Alert.alert(t('myCookbook'), t('cookbookTooMany', { n: MAX_COOKBOOK_RECIPES })); return current; }
+    return [...current, id];
+  });
+  const openCookbook = () => {
+    const ids = selected.join(',');
+    stopSelecting();
+    router.push({ pathname: '/cookbook', params: { ids } });
+  };
 
   useEffect(() => {
     setQuery(typeof params.query === 'string' ? params.query : '');
@@ -72,14 +87,21 @@ export function RecipeCollection({ favoritesOnly = false }: { favoritesOnly?: bo
   );
 
   return (
-    <Screen>
+    <View style={styles.page}>
+    <Screen contentStyle={selecting ? styles.selectingContent : undefined}>
       <AppHeader />
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{favoritesOnly ? t('favorites') : t('recipes')}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('addRecipe')} onPress={() => router.push('/add')} hitSlop={8} style={styles.iconButton}>
-          <Icon name="plus" color={colors.text} size={22} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          {recipes.length > 0 && <Pressable accessibilityRole="button" onPress={() => selecting ? stopSelecting() : setSelecting(true)} hitSlop={8} style={styles.textButton}>
+            <Text style={[styles.textButtonLabel, { color: colors.primaryText }]}>{selecting ? t('cancel') : t('select')}</Text>
+          </Pressable>}
+          {!selecting && <Pressable accessibilityRole="button" accessibilityLabel={t('addRecipe')} onPress={() => router.push('/add')} hitSlop={8} style={styles.iconButton}>
+            <Icon name="plus" color={colors.text} size={22} />
+          </Pressable>}
+        </View>
       </View>
+      {selecting && <Text style={[styles.selectHint, { color: colors.muted }]}>{t('selectHint')}</Text>}
       <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.line }]}>
         <Icon name="search" color={colors.muted} size={17} />
         <TextInput value={query} onChangeText={setQuery} placeholder={t('search')} placeholderTextColor={colors.muted} style={[styles.search, { color: colors.text }]} returnKeyType="search" />
@@ -98,7 +120,8 @@ export function RecipeCollection({ favoritesOnly = false }: { favoritesOnly?: bo
       </View>}
       {loading ? <ActivityIndicator color={colors.primaryText} style={{ marginTop: 30 }} /> : shown.length ? (
         <View>{shown.map((recipe) => (
-          <Pressable key={recipe.id} accessibilityRole="button" onPress={() => router.push(`/recipe/${recipe.id}`)} style={({ pressed }) => [styles.row, { borderBottomColor: colors.line, opacity: pressed ? 0.8 : 1 }]}>
+          <Pressable key={recipe.id} accessibilityRole={selecting ? 'checkbox' : 'button'} accessibilityState={selecting ? { checked: selected.includes(recipe.id) } : undefined}
+            onPress={() => selecting ? toggleSelected(recipe.id) : router.push(`/recipe/${recipe.id}`)} style={({ pressed }) => [styles.row, { borderBottomColor: colors.line, opacity: pressed ? 0.8 : 1 }]}>
             <RecipeImage uri={recipe.imageUri} style={styles.thumb} glyphSize={20} />
             <View style={styles.rowText}>
               <Text numberOfLines={2} style={[styles.rowTitle, { color: colors.text }]}>{recipe.title}</Text>
@@ -106,9 +129,11 @@ export function RecipeCollection({ favoritesOnly = false }: { favoritesOnly?: bo
                 {recipe.totalTime ? `${recipe.totalTime} ${t('minuteAbbrev')}` : categoryLabels[language][recipe.category]}
               </Text>
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('favorite')} accessibilityState={{ selected: recipe.favorite }} onPress={() => void favorite(recipe)} hitSlop={6} style={styles.heart}>
+            {selecting ? <View style={styles.heart}>
+              <Icon name={selected.includes(recipe.id) ? 'checkSquare' : 'square'} color={selected.includes(recipe.id) ? colors.primaryText : colors.muted} size={24} />
+            </View> : <Pressable accessibilityRole="button" accessibilityLabel={t('favorite')} accessibilityState={{ selected: recipe.favorite }} onPress={() => void favorite(recipe)} hitSlop={6} style={styles.heart}>
               <Icon name={recipe.favorite ? 'heartFill' : 'heart'} color={recipe.favorite ? colors.accentText : colors.muted} size={22} />
-            </Pressable>
+            </Pressable>}
           </Pressable>
         ))}</View>
       ) : (
@@ -119,10 +144,23 @@ export function RecipeCollection({ favoritesOnly = false }: { favoritesOnly?: bo
         </View>
       )}
     </Screen>
+    {selecting && <View style={[styles.selectBar, { backgroundColor: colors.surface, borderTopColor: colors.line }]}>
+      <Text style={[styles.selectCount, { color: colors.muted }]}>{t('selectedCount', { n: selected.length })}</Text>
+      <View style={{ flex: 1 }}><ManaButton title={t('createCookbookButton')} onPress={openCookbook} disabled={!selected.length} icon={<Icon name="book" color={colors.onPrimary} size={18} />} /></View>
+    </View>}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  page: { flex: 1 },
+  selectingContent: { paddingBottom: 110 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  textButton: { minHeight: 40, paddingHorizontal: 8, justifyContent: 'center' },
+  textButtonLabel: { fontSize: 15, fontWeight: '700' },
+  selectHint: { fontSize: 13, lineHeight: 19, marginTop: -8 },
+  selectBar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 22, paddingVertical: 12, borderTopWidth: 1 },
+  selectCount: { fontSize: 13, fontWeight: '600' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5 },
   title: { fontSize: 30, fontWeight: '700', letterSpacing: -0.8 },
   iconButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },

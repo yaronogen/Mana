@@ -48,6 +48,7 @@ export default function RootLayout() {
             <Stack.Screen name="profile" options={{ title: '' }} />
             <Stack.Screen name="billing" options={{ title: '' }} />
             <Stack.Screen name="r/[code]" options={{ title: '' }} />
+            <Stack.Screen name="cookbook" options={{ title: '' }} />
           </Stack>
         </ShareIntentHandler>
       </QueryClientProvider>
