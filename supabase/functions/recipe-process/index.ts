@@ -1,7 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createRecipeAiProvider, ProviderUnavailableError } from '../_shared/recipeAiProvider.ts';
 import { fetchRecipePage, PageFetchError } from '../_shared/fetchRecipePage.ts';
-import { extractWebPage, formatWebRecipeForModel, isFetchableUrl, isRecipeInLanguage } from '../../../src/services/import/webRecipe.ts';
+import {
+  extractInstagramCaption, extractWebPage, formatInstagramForModel, formatWebRecipeForModel, instagramEmbedUrl, instagramPostCode, instagramPostUrl,
+  isFetchableUrl, isRecipeInLanguage, type InstagramCaption,
+} from '../../../src/services/import/webRecipe.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +16,7 @@ const maxCharacters = 30_000;
 const minPageTextCharacters = 120;
 
 const maxSharedRecipeCharacters = 60_000;
+const minCaptionCharacters = 30;
 
 /** Ten random letters and digits for a share link (62^10 possibilities). */
 function shareCode(): string {
@@ -29,6 +33,19 @@ function isSharedRecipeShape(value: unknown): boolean {
     && typeof recipe.outputLanguage === 'string' && !!languages[recipe.outputLanguage]
     && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && recipe.ingredients.length <= 100
     && Array.isArray(recipe.steps) && recipe.steps.length > 0 && recipe.steps.length <= 80;
+}
+
+/** The caption of a public Instagram post: the embed page first, then the post page. Null when neither has it. */
+async function readInstagramCaption(code: string): Promise<InstagramCaption | null> {
+  for (const url of [instagramEmbedUrl(code), instagramPostUrl(code)]) {
+    try {
+      const caption = extractInstagramCaption((await fetchRecipePage(url)).html);
+      if (caption && caption.caption.length >= minCaptionCharacters) return caption;
+    } catch (error) {
+      if (!(error instanceof PageFetchError)) throw error;
+    }
+  }
+  return null;
 }
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
@@ -117,12 +134,25 @@ Deno.serve(async (request) => {
       return json(400, { error: 'invalid_request' });
     }
 
+    // Instagram post or reel: the recipe is in the caption. It is read before the import is counted,
+    // so a private post or a blocked page does not use up one of the user's imports.
+    let sourceName: string | null = null;
+    const instagramCode = pageUrl ? instagramPostCode(pageUrl) : null;
+    if (instagramCode) {
+      const caption = await readInstagramCaption(instagramCode);
+      if (!caption) return json(422, { error: 'instagram_caption_unavailable' });
+      text = formatInstagramForModel(caption);
+      pageUrl = instagramPostUrl(instagramCode);
+      imageUrl = caption.imageUrl;
+      sourceName = caption.author ? `@${caption.author} · Instagram` : 'Instagram';
+    }
+
     const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
     const { data: allowed, error: quotaError } = await admin.rpc('consume_recipe_import', { p_user_id: user.id });
     if (quotaError) return json(503, { error: 'service_unavailable' });
     if (!allowed) return json(429, { error: 'daily_limit_reached' });
 
-    if (pageUrl) {
+    if (pageUrl && !instagramCode) {
       let html: string;
       try {
         ({ html } = await fetchRecipePage(pageUrl));
@@ -146,7 +176,7 @@ Deno.serve(async (request) => {
       const recipe = result.recipe as Record<string, unknown>;
       recipe.sourceUrl = pageUrl;
       recipe.imageUrl = imageUrl;
-      recipe.sourceName ??= new URL(pageUrl).hostname.replace(/^www\./, '');
+      recipe.sourceName = sourceName ?? recipe.sourceName ?? new URL(pageUrl).hostname.replace(/^www\./, '');
     }
     return json(200, result.recipe);
   } catch (error) {

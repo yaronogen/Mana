@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from '../src/components/Typography';
@@ -19,7 +19,9 @@ import { useProfile } from '../src/stores/profile';
 import { useManaTheme } from '../src/theme/useManaTheme';
 
 export default function PasteRecipeScreen() {
-  const [text, setText] = useState('');
+  // Text or a link shared into Mana from another app (e.g. an Instagram reel) arrives here and imports right away.
+  const { shared } = useLocalSearchParams<{ shared?: string }>();
+  const [text, setText] = useState(() => (typeof shared === 'string' ? shared : '').slice(0, 30_000));
   const [error, setError] = useState<string | null>(null);
   const { colors } = useManaTheme();
   const { t } = useTranslation();
@@ -52,6 +54,7 @@ export default function PasteRecipeScreen() {
       const code = caught instanceof RecipeImportError ? caught.code : 'invalid_response';
       const message = code === 'not_configured' ? t('importUnavailable')
         : code === 'no_recipe' ? `${t('importFailed')} ${t('importHelp')}`
+          : code === 'instagram_caption' ? t('instagramCaptionHelp')
           : code === 'too_long' ? t('textTooLong')
             : code === 'rate_limited' ? t('importLimit')
             : code === 'page_unavailable' ? t('pageUnavailable')
@@ -59,6 +62,14 @@ export default function PasteRecipeScreen() {
       setError(message);
     }
   };
+
+  // Runs once, for the shared text the screen opened with.
+  const startedShared = useRef(false);
+  useEffect(() => {
+    if (startedShared.current || !text.trim() || typeof shared !== 'string') return;
+    startedShared.current = true;
+    void create();
+  }, []);
 
   if (busy) return <PreparingRecipe fromLink={isLink} />;
 

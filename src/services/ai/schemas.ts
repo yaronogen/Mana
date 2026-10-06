@@ -23,7 +23,8 @@ export const recipeDraftSchema = z.object({
     preparation: z.string().max(240).nullable(),
     isOptional: z.boolean(),
   })).min(1).max(100),
-  steps: z.array(z.object({ text: z.string().trim().min(1).max(1500) })).min(1).max(80),
+  // May be empty when the source lists only ingredients (common in social posts); the import adds a warning.
+  steps: z.array(z.object({ text: z.string().trim().min(1).max(1500) })).max(80),
   category: z.enum(RECIPE_CATEGORIES),
   tags: z.array(z.string().trim().min(1).max(40)).max(8),
   notes: z.array(z.string().trim().min(1).max(600)).max(20),

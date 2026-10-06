@@ -1,11 +1,11 @@
 import { createId, NEW_RECIPE_STATS, type AppLanguage, type Recipe, type RecipeCategory } from '../../domain/recipe';
-import { extractRecipeUrl } from '../import/webRecipe';
+import { extractRecipeUrl, instagramPostCode } from '../import/webRecipe';
 import { recipeFromWebRecipe, webRecipeSchema } from '../import/webRecipeDraft';
 import { recipeDraftSchema } from './schemas';
 import { ensureAnonymousSession, supabase } from './supabaseClient';
 
 export class RecipeImportError extends Error {
-  constructor(public readonly code: 'not_configured' | 'no_recipe' | 'network' | 'invalid_response' | 'too_long' | 'rate_limited' | 'page_unavailable') {
+  constructor(public readonly code: 'not_configured' | 'no_recipe' | 'instagram_caption' | 'network' | 'invalid_response' | 'too_long' | 'rate_limited' | 'page_unavailable') {
     super(code);
     this.name = 'RecipeImportError';
   }
@@ -29,7 +29,8 @@ export async function parseRecipeText(text: string, targetLanguage: AppLanguage)
     if (result.error) {
       const status = typeof result.error.context === 'object' && result.error.context !== null && 'status' in result.error.context
         ? Number(result.error.context.status) : undefined;
-      if (status === 422) throw new RecipeImportError('no_recipe');
+      // For an Instagram link this means the caption could not be read (private post, blocked page) or has no recipe.
+      if (status === 422) throw new RecipeImportError(url && instagramPostCode(url) ? 'instagram_caption' : 'no_recipe');
       if (status === 413) throw new RecipeImportError('too_long');
       if (status === 429) throw new RecipeImportError('rate_limited');
       if (status === 424 || (url && status === 400)) throw new RecipeImportError('page_unavailable');

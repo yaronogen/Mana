@@ -1,4 +1,5 @@
 import '@/i18n';
+import { ShareIntentHandler } from '@/components/ShareIntentHandler';
 import { usePreferences } from '@/stores/preferences';
 import { useProfile } from '@/stores/profile';
 import { useManaTheme } from '@/theme/useManaTheme';
@@ -32,21 +33,23 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <Stack screenOptions={{ contentStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerShadowVisible: false, headerStyle: { backgroundColor: colors.background },
-          // Without an explicit title iOS falls back to the previous route's name, e.g. "(tabs)".
-          headerBackTitle: t('back') }}>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('back') }} />
-          <Stack.Screen name="add" options={{ title: '' }} />
-          <Stack.Screen name="paste" options={{ title: '' }} />
-          <Stack.Screen name="editor" options={{ title: '' }} />
-          <Stack.Screen name="import-review" options={{ title: '' }} />
-          <Stack.Screen name="profile" options={{ title: '' }} />
-          <Stack.Screen name="billing" options={{ title: '' }} />
-          <Stack.Screen name="r/[code]" options={{ title: '' }} />
-        </Stack>
+        <ShareIntentHandler>
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+          <Stack screenOptions={{ contentStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerShadowVisible: false, headerStyle: { backgroundColor: colors.background },
+            // Without an explicit title iOS falls back to the previous route's name, e.g. "(tabs)".
+            headerBackTitle: t('back') }}>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('back') }} />
+            <Stack.Screen name="add" options={{ title: '' }} />
+            <Stack.Screen name="paste" options={{ title: '' }} />
+            <Stack.Screen name="editor" options={{ title: '' }} />
+            <Stack.Screen name="import-review" options={{ title: '' }} />
+            <Stack.Screen name="profile" options={{ title: '' }} />
+            <Stack.Screen name="billing" options={{ title: '' }} />
+            <Stack.Screen name="r/[code]" options={{ title: '' }} />
+          </Stack>
+        </ShareIntentHandler>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

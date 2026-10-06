@@ -1,4 +1,4 @@
-export const RECIPE_PROMPT_VERSION = 'recipe-extract-v1';
+export const RECIPE_PROMPT_VERSION = 'recipe-extract-v2';
 
 export const RECIPE_SYSTEM_PROMPT = `You are Mana's culinary recipe extraction and translation engine.
 Task: extract only recipe-relevant facts from user-provided text, identify its language, and produce a clean recipe in the requested output language.
@@ -12,6 +12,7 @@ FIDELITY RULES (highest priority):
 - Translate culinary terms naturally for a native speaker. Translate ingredient names, instructions, category, and tags into the requested language. Use culinary equivalents, not literal word-for-word translation. Do not change measurements as part of translation.
 - sourceLanguage is a BCP-47 language code where identifiable. If uncertain, use 'und' and add a warning.
 - Capture source URL/name only if explicitly present in the text. Never invent attribution.
+- If the text lists ingredients but no preparation steps (common in social media captions), return steps as an empty array and add a warning that the source has no preparation steps. Never write steps yourself.
 - Choose exactly one category ID from the provided enum; produce 3–6 specific useful tags (at most 8).
 - If the text has no identifiable recipe, set the provider envelope to hasRecipe=false and recipe=null; the service will respond with 422. Do not fabricate a recipe.
 - The provider response envelope is { hasRecipe: boolean, recipe: Recipe | null }; the recipe object must match the supplied structured schema. No markdown or commentary.`;

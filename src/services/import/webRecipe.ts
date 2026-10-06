@@ -320,3 +320,46 @@ export function guessCategory(recipe: WebRecipe): string {
   }
   return 'other';
 }
+
+// Instagram posts and reels. Shared from the Instagram app, Mana receives only the post link; the recipe
+// is in the caption. The public embed page (the one websites use to embed a post) carries the full
+// caption; the post page's og:description is a fallback that may be shortened. Private posts have neither.
+
+export type InstagramCaption = { caption: string; author: string | null; imageUrl: string | null };
+
+/** The post code of an Instagram post or reel link ("instagram.com/reel/ABC123/?igsh=…" → "ABC123"); null for other links. */
+export function instagramPostCode(value: string): string | null {
+  let url: URL;
+  try { url = new URL(value); } catch { return null; }
+  if (!/^(www\.|m\.)?instagram\.com$/i.test(url.hostname)) return null;
+  return url.pathname.match(/^\/(?:[A-Za-z0-9._]+\/)?(?:p|reels?|tv)\/([A-Za-z0-9_-]{5,40})\/?$/)?.[1] ?? null;
+}
+
+export const instagramPostUrl = (code: string) => `https://www.instagram.com/p/${code}/`;
+export const instagramEmbedUrl = (code: string) => `https://www.instagram.com/p/${code}/embed/captioned/`;
+
+/** Reads the caption from an Instagram embed page, or from a post page's og:description. */
+export function extractInstagramCaption(html: string): InstagramCaption | null {
+  const start = html.indexOf('<div class="Caption"');
+  const imageTag = html.match(/<img\b[^>]*class="[^"]*EmbeddedMediaImage[^"]*"[^>]*>/i)?.[0];
+  const embedImage = imageTag ? attribute(imageTag, 'src') : null;
+  if (start !== -1) {
+    const rest = html.slice(start);
+    const end = rest.search(/<div class="CaptionComments"|<div class="Footer"/);
+    const block = end === -1 ? rest.slice(0, 20_000) : rest.slice(0, end);
+    const username = block.match(/<a\b[^>]*class="CaptionUsername"[^>]*>([\s\S]*?)<\/a>/i);
+    const caption = cleanText(block.replace(username?.[0] ?? '', '')).slice(0, MAX_PAGE_TEXT_CHARACTERS);
+    if (caption) return { caption, author: username ? cleanText(username[1]) || null : null, imageUrl: embedImage };
+  }
+  // "120 likes, 4 comments - cook on October 1, 2026: "caption"."
+  const description = metaContent(html, 'og:description');
+  const quoted = description?.match(/^[\s\S]*?\s-\s([A-Za-z0-9._]+)\s[^:]*:\s*"([\s\S]+)"\.?\s*$/);
+  if (!quoted) return null;
+  const caption = quoted[2].trim().slice(0, MAX_PAGE_TEXT_CHARACTERS);
+  return caption ? { caption, author: quoted[1], imageUrl: metaContent(html, 'og:image') } : null;
+}
+
+/** Model input for a caption: who posted it, then the caption as written. */
+export function formatInstagramForModel({ caption, author }: InstagramCaption): string {
+  return [author ? `Instagram post by @${author}` : 'Instagram post', caption].join('\n\n');
+}

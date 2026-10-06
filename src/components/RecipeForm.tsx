@@ -39,7 +39,8 @@ export function RecipeForm({ initialRecipe, onSave, saveLabel, pageTitle }: { in
   const [ingredients, setIngredients] = useState(() => base.ingredients.map((item) => ({
     id: item.id, text: formatIngredient(item, resources[base.outputLanguage].optional), initialText: formatIngredient(item, resources[base.outputLanguage].optional), initialOriginalText: item.originalText, originalText: item.originalText,
   })));
-  const [steps, setSteps] = useState<RecipeStep[]>(base.steps.map((step) => ({ ...step })));
+  // A recipe imported without steps (e.g. an Instagram caption that lists only ingredients) opens with one empty step to fill in.
+  const [steps, setSteps] = useState<RecipeStep[]>(base.steps.length ? base.steps.map((step) => ({ ...step })) : [{ id: createId(), text: '' }]);
   const [category, setCategory] = useState<RecipeCategory>(base.category);
   const [tags, setTags] = useState(base.tags.join(', '));
   const [notes, setNotes] = useState(base.notes.join('\n'));
@@ -93,7 +94,7 @@ export function RecipeForm({ initialRecipe, onSave, saveLabel, pageTitle }: { in
   const inputStyle = [styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.line, writingDirection: rtl ? 'rtl' as const : 'ltr' as const }];
   const labelStyle = [styles.label, { color: colors.text }];
   const save = async () => {
-    if (!title.trim() || !ingredients.some((item) => item.text.trim()) || !steps.some((step) => step.text.trim())) {
+    if (!title.trim() || !ingredients.some((item) => item.text.trim())) {
       Alert.alert(t('missingDetailsTitle'), t('missingDetailsBody'));
       return;
     }
