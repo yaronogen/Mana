@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseIngredientLine } from './ingredientText';
-import { dislikedIngredients, matchesFavoriteCuisine, profileConflicts, relativeDay } from './personalization';
+import { dislikedIngredients, matchesFavoriteCuisine, profileConflicts, relativeDay, splitConflicts } from './personalization';
 import { parseDislikes, parseProfile } from './profile';
 
 const recipeWith = (...lines: string[]) => ({ ingredients: lines.map(parseIngredientLine) });
@@ -30,6 +30,13 @@ describe('profile conflicts', () => {
     expect(profileConflicts(goulash, { allergies: [], diets: ['glutenFree'] })).toEqual(['gluten']);
     expect(profileConflicts(recipeWith('200 g bacon', '100 g butter'), { allergies: [], diets: ['kosher'] })).toEqual(['pork', 'meatAndDairy']);
     expect(profileConflicts(recipeWith('2 tbsp honey', '1 cup oat milk'), { allergies: [], diets: ['vegan'] })).toEqual(['honey']);
+  });
+
+  it('separates allergies from diet conflicts, counting an overlap once as an allergy', () => {
+    const recipe = recipeWith('200 g Mehl', '300 g Rindfleisch', '50 g Butter');
+    expect(splitConflicts(recipe, { allergies: ['gluten'], diets: ['vegetarian', 'glutenFree'] })).toEqual({ allergens: ['gluten'], other: ['meat'] });
+    expect(splitConflicts(recipe, { allergies: [], diets: ['glutenFree'] })).toEqual({ allergens: [], other: ['gluten'] });
+    expect(splitConflicts(recipeWith('3 ביצים'), { allergies: ['eggs'], diets: [] })).toEqual({ allergens: ['eggs'], other: [] });
   });
 });
 

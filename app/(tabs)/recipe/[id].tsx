@@ -12,15 +12,17 @@ import { ManaButton } from '../../../src/components/ManaButton';
 import { choosePhotoAction } from '../../../src/components/photoActions';
 import { RecipeImage } from '../../../src/components/RecipeImage';
 import { Screen } from '../../../src/components/Screen';
-import { addGroceries, getCookLog, getRecipe, logCook, toggleFavorite } from '../../../src/data/database';
+import { addGroceries, getCookLog, getRecipe, logCook, setRating, toggleFavorite } from '../../../src/data/database';
 import { groceryItemsFromRecipe } from '../../../src/domain/groceries';
-import { convertIngredient, convertTemperatures } from '../../../src/domain/units';
+import { displayIngredient, servingsFactor } from '../../../src/domain/scaling';
+import { convertTemperatures } from '../../../src/domain/units';
 import { formatIngredient } from '../../../src/domain/ingredientText';
 import type { CookLogEntry, Recipe } from '../../../src/domain/recipe';
 import { categoryLabels, resources } from '../../../src/i18n/resources';
 import { deleteRecipeWithImage, pickRecipeImage, saveRecipeWithImage } from '../../../src/services/images/recipeImages';
 import { formatRecipeShare } from '../../../src/services/sharing/formatRecipeShare';
 import { usePreferences } from '../../../src/stores/preferences';
+import { useProfile } from '../../../src/stores/profile';
 import { useTranslations } from '../../../src/stores/translations';
 import { useManaTheme } from '../../../src/theme/useManaTheme';
 
@@ -31,6 +33,9 @@ export default function RecipeDetailScreen() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [cookLog, setCookLog] = useState<CookLogEntry[]>([]);
   const [cookSheet, setCookSheet] = useState(false);
+  const [rateSheet, setRateSheet] = useState(false);
+  const [servingsChoice, setServingsChoice] = useState<{ id: string; n: number } | null>(null);
+  const householdSize = useProfile((state) => state.profile.householdSize);
   const [grocerySheet, setGrocerySheet] = useState(false);
   const [loading, setLoading] = useState(true);
   const { colors } = useManaTheme();
@@ -81,8 +86,9 @@ export default function RecipeDetailScreen() {
     await reload();
     setCookLog(await getCookLog(recipe.id));
   };
+  const saveRating = async (rating: number | null) => { await setRating(recipe.id, rating); await reload(); };
   const addToGroceries = async (ingredientIds: string[]) => {
-    await addGroceries(groceryItemsFromRecipe(recipe, ingredientIds, { optionalLabel: resources[recipe.outputLanguage].optional, unitSystem }));
+    await addGroceries(groceryItemsFromRecipe(recipe, ingredientIds, { optionalLabel: resources[recipe.outputLanguage].optional, unitSystem, servingsFactor: factor }));
     setGrocerySheet(false);
     Alert.alert(t('addedToListTitle'), t('addedToListBody', { n: ingredientIds.length }), [
       { text: t('continue'), style: 'cancel' },
@@ -106,8 +112,12 @@ export default function RecipeDetailScreen() {
   const stats = [
     { label: t('prepTime'), value: recipe.preparationTime, unit: t('minutes') },
     recipe.totalTime !== null ? { label: t('totalTime'), value: recipe.totalTime, unit: t('minutes') } : { label: t('cookTime'), value: recipe.cookingTime, unit: t('minutes') },
-    { label: t('servings'), value: recipe.servings, unit: '' },
   ].filter((item) => item.value !== null);
+  // "Cooking for" from the profile picks the starting servings; the stepper changes them for this visit only.
+  const targetServings = recipe.servings === null ? null
+    : servingsChoice?.id === recipe.id ? servingsChoice.n : householdSize ?? recipe.servings;
+  const factor = servingsFactor(recipe.servings, targetServings);
+  const changeServings = (delta: number) => { if (targetServings !== null) setServingsChoice({ id: recipe.id, n: Math.min(48, Math.max(1, targetServings + delta)) }); };
   const circle = (icon: Parameters<typeof Icon>[0]['name'], label: string, onPress: () => void, tint = colors.text) => (
     <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={6} style={[styles.circle, { backgroundColor: colors.surface }]}>
       <Icon name={icon} color={tint} size={18} />
@@ -146,7 +156,7 @@ export default function RecipeDetailScreen() {
           </View>}
           <HeadsUp recipe={recipe} />
 
-          {!!stats.length && <View style={[styles.stats, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          {(!!stats.length || targetServings !== null) && <View style={[styles.stats, { backgroundColor: colors.surface, borderColor: colors.line }]}>
             {stats.map((item, index) => <Fragment key={item.label}>
               {index > 0 && <View style={[styles.statDivider, { backgroundColor: colors.line }]} />}
               <View style={styles.stat}>
@@ -154,26 +164,43 @@ export default function RecipeDetailScreen() {
                 <Text style={[styles.statLabel, { color: colors.muted }]}>{item.label}</Text>
               </View>
             </Fragment>)}
+            {targetServings !== null && <>
+              {stats.length > 0 && <View style={[styles.statDivider, { backgroundColor: colors.line }]} />}
+              <View style={styles.stat}>
+                <View style={styles.servingsStepper}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t('fewerServings')} disabled={targetServings <= 1} onPress={() => changeServings(-1)} hitSlop={8}
+                    style={[styles.servingsButton, { backgroundColor: colors.primarySoft, opacity: targetServings <= 1 ? 0.4 : 1 }]}><Text style={[styles.servingsGlyph, { color: colors.primaryText }]}>−</Text></Pressable>
+                  <Text accessibilityLiveRegion="polite" style={[styles.statValue, { color: colors.text }]}>{targetServings}</Text>
+                  <Pressable accessibilityRole="button" accessibilityLabel={t('moreServings')} onPress={() => changeServings(1)} hitSlop={8}
+                    style={[styles.servingsButton, { backgroundColor: colors.primarySoft }]}><Text style={[styles.servingsGlyph, { color: colors.primaryText }]}>+</Text></Pressable>
+                </View>
+                <Text style={[styles.statLabel, { color: colors.muted }]}>{t('servings')}</Text>
+              </View>
+            </>}
           </View>}
+          {factor !== 1 && <Text style={[styles.scaledNote, { color: colors.muted }]}>{t('scaledFor', { n: targetServings, base: recipe.servings })}</Text>}
 
           {!!recipe.tags.length && <View style={styles.tags}>{recipe.tags.map((tag) => <View key={tag} style={[styles.tag, { backgroundColor: colors.primarySoft }]}><Text style={[styles.tagText, { color: colors.primaryText }]}>{tag}</Text></View>)}</View>}
 
-          <View style={[styles.cooked, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-            {recipe.cookCount > 0 ? <View style={{ flex: 1, gap: 3 }}>
-              {recipe.rating !== null && <Stars value={recipe.rating} color={colors.accentText} />}
-              <Text style={[styles.cookedText, { color: colors.text }]}>
-                {recipe.cookCount === 1 ? t('cookedOnce') : t('cookedTimes', { n: recipe.cookCount })}{recipe.lastCookedAt ? ` · ${t('lastCooked', { when: describeWhen(t, recipe.lastCookedAt) })}` : ''}
-              </Text>
-            </View> : <View style={{ flex: 1 }} />}
-            <View style={recipe.cookCount > 0 ? undefined : { flex: 1 }}>
-              <ManaButton title={t('iCookedThis')} onPress={() => setCookSheet(true)} secondary icon={<Icon name="check" color={colors.primaryText} size={17} />} />
+          {/* Starts at the leading edge: left in left-to-right languages, right in Hebrew (the page sets the direction). */}
+          <View style={styles.cooked}>
+            <View style={styles.cookedButtons}>
+              {/* The check appears only once the recipe has been cooked. */}
+              <ManaButton title={t('iCookedThis')} onPress={() => setCookSheet(true)} secondary icon={recipe.cookCount > 0 ? <Icon name="check" color={colors.primaryText} size={15} /> : undefined} />
+              <Pressable accessibilityRole="button" accessibilityLabel={recipe.rating !== null ? `${t('rateRecipe')}: ${recipe.rating}/5` : `${t('rateRecipe')}: ${t('notRated')}`}
+                onPress={() => setRateSheet(true)} style={({ pressed }) => [styles.ratingButton, { backgroundColor: colors.primarySoft, opacity: pressed ? 0.82 : 1 }]}>
+                <Stars value={recipe.rating ?? 0} size={17} color={colors.accentText} />
+              </Pressable>
             </View>
+            {recipe.cookCount > 0 && <Text style={[styles.cookedText, { color: colors.muted }]}>
+              {recipe.cookCount === 1 ? t('cookedOnce') : t('cookedTimes', { n: recipe.cookCount })}{recipe.lastCookedAt ? ` · ${t('lastCooked', { when: describeWhen(t, recipe.lastCookedAt) })}` : ''}
+            </Text>}
           </View>
 
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('ingredients')} <Text style={[styles.count, { color: colors.muted }]}>({recipe.ingredients.length})</Text></Text>
           <View style={[styles.ingredientList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
             {recipe.ingredients.map((ingredient, index) => {
-              const converted = convertIngredient(ingredient, unitSystem, recipe.outputLanguage);
+              const converted = displayIngredient(ingredient, { factor, unitSystem, language: recipe.outputLanguage });
               return <View key={ingredient.id} style={[styles.ingredientRow, index < recipe.ingredients.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.line }]}>
                 <View style={[styles.ingredientDot, { backgroundColor: colors.primarySoft }]}><Icon name="asterisk" color={colors.primaryText} size={12} /></View>
                 <View style={styles.ingredientBody}>
@@ -212,7 +239,8 @@ export default function RecipeDetailScreen() {
         </View>
       </ScrollView>
       <CookedSheet visible={cookSheet} onClose={() => setCookSheet(false)} onSave={saveCook} />
-      <AddToGroceriesSheet recipe={recipe} visible={grocerySheet} onClose={() => setGrocerySheet(false)} onAdd={addToGroceries} />
+      <CookedSheet mode="rate" initialRating={recipe.rating} visible={rateSheet} onClose={() => setRateSheet(false)} onSave={(rating) => saveRating(rating)} />
+      <AddToGroceriesSheet recipe={recipe} servingsFactor={factor} visible={grocerySheet} onClose={() => setGrocerySheet(false)} onAdd={addToGroceries} />
     </View>
   );
 }
@@ -232,6 +260,10 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', borderWidth: 1, borderRadius: 16, paddingVertical: 14 },
   stat: { flex: 1, alignItems: 'center', gap: 4 }, statDivider: { width: 1, marginVertical: 2 },
   statValue: { fontSize: 16, fontWeight: '700' }, statLabel: { fontSize: 12 },
+  servingsStepper: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  servingsButton: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  servingsGlyph: { fontSize: 17, fontWeight: '700', lineHeight: 20 },
+  scaledNote: { fontSize: 12, lineHeight: 17, marginTop: -6 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, tag: { borderRadius: 14, paddingHorizontal: 11, paddingVertical: 6 }, tagText: { fontSize: 12, fontWeight: '600' },
   sectionTitle: { fontSize: 19, fontWeight: '700', marginTop: 8 }, count: { fontSize: 14, fontWeight: '500' },
   ingredientList: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 14 },
@@ -245,7 +277,9 @@ const styles = StyleSheet.create({
   translationNote: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
   translationText: { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '600' }, translationRetry: { fontSize: 13, fontWeight: '800' },
   bottomActions: { flexDirection: 'row', gap: 10, marginTop: 6 },
-  cooked: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 12 },
+  cooked: { gap: 8 },
+  cookedButtons: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: 10 },
+  ratingButton: { minHeight: 54, borderRadius: 18, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center' },
   cookedText: { fontSize: 13, fontWeight: '600' },
   noteCard: { borderWidth: 1, borderRadius: 14, padding: 12, gap: 4 },
   noteHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

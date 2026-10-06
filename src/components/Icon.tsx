@@ -37,6 +37,7 @@ const icons = {
   asterisk: { ios: 'asterisk', android: 'asterisk', web: 'asterisk' },
   dice: { ios: 'dice', android: 'casino', web: 'casino' },
   info: { ios: 'info.circle', android: 'info', web: 'info' },
+  alert: { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' },
   person: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
   star: { ios: 'star.fill', android: 'star', web: 'star' },
   drag: { ios: 'line.3.horizontal', android: 'drag_indicator', web: 'drag_indicator' },

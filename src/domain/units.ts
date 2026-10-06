@@ -39,14 +39,14 @@ const GLYPHS: [number, string][] = [[0, ''], [0.25, '¼'], [1 / 3, '⅓'], [0.5,
 const AMOUNT = '(?:\\d+\\s+)?(?:\\d+(?:[.,]\\d+)?|\\d+\\/\\d+|[½¼¾⅓⅔⅛⅜⅝⅞])';
 const RANGE = new RegExp(`^(${AMOUNT})(?:\\s*(?:-|–|to|bis|עד)\\s*(${AMOUNT}))?$`, 'u');
 
-function lookupUnit(unit: string | null): Known | null {
+export function lookupUnit(unit: string | null): Known | null {
   if (!unit) return null;
   const key = UNIT_ALIASES[unit.trim().toLocaleLowerCase().replace(/\.$/, '')];
   return key ? KNOWN[key] : null;
 }
 
 /** "1 1/2" → [1.5], "400–450" → [400, 450]; null when the amount is not plainly numeric. */
-function parseAmounts(text: string): number[] | null {
+export function parseAmounts(text: string): number[] | null {
   const match = normalizeAmounts(text.trim()).match(RANGE);
   if (!match) return null;
   const values = [match[1], match[2]].filter((part): part is string => part !== undefined).map(numericQuantity);
@@ -54,18 +54,18 @@ function parseAmounts(text: string): number[] | null {
 }
 
 /** Whole number plus the nearest common kitchen fraction: 1.5 → "1½", 0.3 → "⅓". */
-function fraction(value: number): { text: string; value: number } {
+export function fraction(value: number): { text: string; value: number } {
   const whole = Math.floor(value);
   const [part, glyph] = GLYPHS.reduce((best, entry) => Math.abs(value - whole - entry[0]) < Math.abs(value - whole - best[0]) ? entry : best);
   if (whole === 0 && part === 0) return { text: '¼', value: 0.25 };
   return { text: `${whole + (part === 1 ? 1 : 0) || ''}${glyph}`, value: whole + part };
 }
 
-function roundTo(value: number, step: number): number {
+export function roundTo(value: number, step: number): number {
   return Math.max(step, Math.round(value / step) * step);
 }
 
-function decimal(value: number): string {
+export function decimal(value: number): string {
   return String(Number(value.toFixed(2)));
 }
 

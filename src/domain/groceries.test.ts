@@ -30,6 +30,11 @@ describe('groceries', () => {
     expect(items.map((entry) => entry.text)).toEqual(['4 ביצים', '14–16 oz tomatoes (400–450 g)']);
   });
 
+  it('scales amounts to the chosen servings with the recipe amount alongside', () => {
+    const items = groceryItemsFromRecipe(recipe, [recipe.ingredients[0].id, recipe.ingredients[1].id, optionalParsley.id], { servingsFactor: 1.5 });
+    expect(items.map((entry) => entry.text)).toEqual(['6 ביצים (4)', '600–680 g tomatoes (400–450 g)', '1½ Bund Petersilie (optional) (1)']);
+  });
+
   it('ignores blank manual items', () => {
     expect(manualGroceryItem('   ')).toBeNull();
     expect(manualGroceryItem('  Milch ')?.text).toBe('Milch');

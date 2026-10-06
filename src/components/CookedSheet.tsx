@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { relativeDay } from '../domain/personalization';
@@ -19,14 +19,21 @@ export function Stars({ value, size = 16, color }: { value: number; size?: numbe
   return <Text style={{ fontSize: size, color, letterSpacing: 1 }}>{'★'.repeat(value)}<Text style={{ opacity: 0.25 }}>{'★'.repeat(5 - value)}</Text></Text>;
 }
 
-/** Bottom sheet to log a cook: optional 1–5 stars and a note for next time. */
-export function CookedSheet({ visible, onClose, onSave }: { visible: boolean; onClose: () => void; onSave: (rating: number | null, note: string | null) => Promise<void> }) {
+/**
+ * Bottom sheet to log a cook: optional 1–5 stars and a note for next time.
+ * In "rate" mode it only sets the stars, starting from the current rating, and logs no cook.
+ */
+export function CookedSheet({ visible, onClose, onSave, mode = 'cook', initialRating = null }: {
+  visible: boolean; onClose: () => void; onSave: (rating: number | null, note: string | null) => Promise<void>; mode?: 'cook' | 'rate'; initialRating?: number | null;
+}) {
   const { colors } = useManaTheme();
   const { t } = useTranslation();
   const rtl = usePreferences((state) => state.language === 'he');
   const [rating, setRating] = useState<number | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const rateOnly = mode === 'rate';
+  useEffect(() => { if (visible) setRating(rateOnly ? initialRating : null); }, [visible, rateOnly, initialRating]);
 
   const close = () => { setRating(null); setNote(''); onClose(); };
   const save = async () => {
@@ -40,8 +47,8 @@ export function CookedSheet({ visible, onClose, onSave }: { visible: boolean; on
         <Pressable accessibilityRole="button" accessibilityLabel={t('cancel')} style={StyleSheet.absoluteFill} onPress={close} />
         <View style={[styles.sheet, { backgroundColor: colors.background, direction: rtl ? 'rtl' : 'ltr' }]}>
           <View style={[styles.grabber, { backgroundColor: colors.line }]} />
-          <Text style={[styles.title, { color: colors.text }]}>{t('howDidItGo')}</Text>
-          <Text style={[styles.label, { color: colors.muted }]}>{t('yourRating')}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{rateOnly ? t('rateTitle') : t('howDidItGo')}</Text>
+          {!rateOnly && <Text style={[styles.label, { color: colors.muted }]}>{t('yourRating')}</Text>}
           <View style={styles.stars}>
             {[1, 2, 3, 4, 5].map((value) => (
               <Pressable key={value} accessibilityRole="button" accessibilityLabel={`${value}`} accessibilityState={{ selected: rating === value }} hitSlop={6}
@@ -50,9 +57,9 @@ export function CookedSheet({ visible, onClose, onSave }: { visible: boolean; on
               </Pressable>
             ))}
           </View>
-          <TextInput value={note} onChangeText={setNote} multiline maxLength={300} placeholder={t('cookNotePlaceholder')} placeholderTextColor={colors.muted}
-            style={[styles.note, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.line }]} />
-          <ManaButton title={t('save')} onPress={() => void save()} loading={busy} />
+          {!rateOnly && <TextInput value={note} onChangeText={setNote} multiline maxLength={300} placeholder={t('cookNotePlaceholder')} placeholderTextColor={colors.muted}
+            style={[styles.note, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.line }]} />}
+          <ManaButton title={rateOnly ? t('saveRating') : t('save')} onPress={() => void save()} loading={busy} />
           <Pressable onPress={close} style={styles.cancel}><Text style={[styles.cancelText, { color: colors.muted }]}>{t('cancel')}</Text></Pressable>
         </View>
       </KeyboardAvoidingView>

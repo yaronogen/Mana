@@ -77,6 +77,16 @@ export function profileConflicts(recipe: Pick<Recipe, 'ingredients'>, profile: P
   return order.filter((conflict) => found.has(conflict));
 }
 
+/**
+ * Splits the conflicts into the user's allergies (a health risk, shown as an allergen warning) and the rest
+ * (diet conflicts, shown as a softer heads-up). An allergy that is also a diet conflict counts only as an allergy.
+ */
+export function splitConflicts(recipe: Pick<Recipe, 'ingredients'>, profile: Pick<Profile, 'allergies' | 'diets'>): { allergens: Allergen[]; other: Conflict[] } {
+  const all = profileConflicts(recipe, profile);
+  const allergens = all.filter((conflict): conflict is Allergen => (profile.allergies as Conflict[]).includes(conflict));
+  return { allergens, other: all.filter((conflict) => !(allergens as Conflict[]).includes(conflict)) };
+}
+
 const CUISINE_WORDS: Record<Cuisine, Keywords> = {
   italian: { words: ['italian', 'pasta', 'pizza', 'risotto', 'lasagna', 'italienisch', 'איטלקי', 'איטלקית', 'פסטה', 'פיצה', 'ריזוטו', 'לזניה'] },
   mediterranean: { words: ['mediterranean', 'greek', 'feta', 'olive', 'olives', 'mediterran', 'griechisch', 'ים תיכוני', 'ים תיכונית', 'יווני', 'יוונית', 'זיתים'] },

@@ -1,6 +1,7 @@
 import { formatIngredient } from './ingredientText';
 import { createId, type Recipe } from './recipe';
-import { convertIngredient, type UnitSystem } from './units';
+import { displayIngredient } from './scaling';
+import type { UnitSystem } from './units';
 
 /**
  * One line on the shopping list. `text` is the ingredient as the recipe wrote it (quantity, unit and all),
@@ -18,14 +19,17 @@ export type GroceryItem = {
 
 export type GroceryGroup = { recipeId: string | null; recipeTitle: string | null; items: GroceryItem[] };
 
-/** In a converted amount, the recipe's own amount follows in brackets: "7 oz flour (200 g)". */
-export function groceryItemsFromRecipe(recipe: Recipe, ingredientIds: Iterable<string>, options: { optionalLabel?: string; unitSystem?: UnitSystem; now?: Date } = {}): GroceryItem[] {
-  const { optionalLabel = 'optional', unitSystem = 'original', now = new Date() } = options;
+/**
+ * In a converted or scaled amount, the recipe's own amount follows in brackets: "7 oz flour (200 g)".
+ * `servingsFactor` scales the amounts to the servings chosen on the recipe page.
+ */
+export function groceryItemsFromRecipe(recipe: Recipe, ingredientIds: Iterable<string>, options: { optionalLabel?: string; unitSystem?: UnitSystem; servingsFactor?: number; now?: Date } = {}): GroceryItem[] {
+  const { optionalLabel = 'optional', unitSystem = 'original', servingsFactor = 1, now = new Date() } = options;
   const wanted = new Set(ingredientIds);
   return recipe.ingredients
     .filter((ingredient) => wanted.has(ingredient.id))
     .map((ingredient, index) => {
-      const converted = convertIngredient(ingredient, unitSystem, recipe.outputLanguage);
+      const converted = displayIngredient(ingredient, { factor: servingsFactor, unitSystem, language: recipe.outputLanguage });
       const text = formatIngredient(converted.ingredient, optionalLabel);
       return {
         id: createId(),

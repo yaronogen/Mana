@@ -204,6 +204,12 @@ export async function logCook(recipeId: string, rating: number | null, note: str
   );
 }
 
+/** Sets (or clears, with null) the recipe's 1–5 rating without logging a cook. */
+export async function setRating(recipeId: string, rating: number | null): Promise<void> {
+  const database = await getDatabase();
+  await database.runAsync('UPDATE recipes SET rating = ? WHERE id = ?', rating, recipeId);
+}
+
 export async function getCookLog(recipeId: string): Promise<CookLogEntry[]> {
   const database = await getDatabase();
   const rows = await database.getAllAsync<Record<string, unknown>>('SELECT * FROM cook_log WHERE recipe_id = ? ORDER BY cooked_at DESC', recipeId);

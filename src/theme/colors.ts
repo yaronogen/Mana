@@ -12,11 +12,11 @@ export const palette = {
 export const lightTheme = {
   background: palette.cream, surface: palette.paper, text: palette.ink, muted: palette.muted,
   line: palette.line, primary: palette.forest, primaryText: palette.forest, primarySoft: palette.sage, accent: palette.orange, accentText: '#9C4D26',
-  leaf: palette.leaf, accentSoft: palette.peach, warningBg: '#F7EDDA', warningText: '#765824', success: palette.forest, onPrimary: palette.white,
+  leaf: palette.leaf, accentSoft: palette.peach, warningBg: '#F7EDDA', warningText: '#765824', dangerBg: '#FBE4E1', dangerText: '#A3231A', success: palette.forest, onPrimary: palette.white,
 };
 
 export const darkTheme: typeof lightTheme = {
   background: palette.dark, surface: palette.darkCard, text: '#F2F0E9', muted: '#A3ADA2',
   line: palette.darkLine, primary: '#3E6549', primaryText: '#9CC3A4', primarySoft: '#243328', accent: palette.orange, accentText: '#E89A70',
-  leaf: '#7FA587', accentSoft: '#3B2A21', warningBg: '#35301F', warningText: '#E8CF9C', success: '#9CC3A4', onPrimary: palette.white,
+  leaf: '#7FA587', accentSoft: '#3B2A21', warningBg: '#35301F', warningText: '#E8CF9C', dangerBg: '#3A1F1C', dangerText: '#F2A49B', success: '#9CC3A4', onPrimary: palette.white,
 };

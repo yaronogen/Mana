@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { formatIngredient } from '../domain/ingredientText';
 import type { Recipe } from '../domain/recipe';
-import { convertIngredient } from '../domain/units';
+import { displayIngredient } from '../domain/scaling';
 import { resources } from '../i18n/resources';
 import { usePreferences } from '../stores/preferences';
 import { useManaTheme } from '../theme/useManaTheme';
@@ -11,8 +11,10 @@ import { Icon } from './Icon';
 import { ManaButton } from './ManaButton';
 import { Text } from './Typography';
 
-/** Bottom sheet to pick which of a recipe's ingredients go on the shopping list. */
-export function AddToGroceriesSheet({ recipe, visible, onClose, onAdd }: { recipe: Recipe; visible: boolean; onClose: () => void; onAdd: (ingredientIds: string[]) => Promise<void> }) {
+/** Bottom sheet to pick which of a recipe's ingredients go on the shopping list, in the amounts for the chosen servings. */
+export function AddToGroceriesSheet({ recipe, servingsFactor = 1, visible, onClose, onAdd }: {
+  recipe: Recipe; servingsFactor?: number; visible: boolean; onClose: () => void; onAdd: (ingredientIds: string[]) => Promise<void>;
+}) {
   const { colors } = useManaTheme();
   const { t } = useTranslation();
   const rtl = usePreferences((state) => state.language === 'he');
@@ -53,7 +55,7 @@ export function AddToGroceriesSheet({ recipe, visible, onClose, onAdd }: { recip
               return <Pressable key={ingredient.id} accessibilityRole="checkbox" accessibilityState={{ checked }} onPress={() => toggle(ingredient.id)}
                 style={[styles.row, index < recipe.ingredients.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.line }]}>
                 <Icon name={checked ? 'checkSquare' : 'square'} color={checked ? colors.primaryText : colors.muted} size={22} />
-                <Text style={[styles.rowText, { color: checked ? colors.text : colors.muted }]}>{formatIngredient(convertIngredient(ingredient, unitSystem, recipe.outputLanguage).ingredient, resources[recipe.outputLanguage].optional)}</Text>
+                <Text style={[styles.rowText, { color: checked ? colors.text : colors.muted }]}>{formatIngredient(displayIngredient(ingredient, { factor: servingsFactor, unitSystem, language: recipe.outputLanguage }).ingredient, resources[recipe.outputLanguage].optional)}</Text>
               </Pressable>;
             })}
           </ScrollView>

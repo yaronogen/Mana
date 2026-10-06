@@ -42,8 +42,10 @@ export default function PasteRecipeScreen() {
     try {
       const draft = await importMutation.mutateAsync({ sourceText: text, targetLanguage: language });
       // The draft is already in the user's language, so their own dislikes match it directly.
-      const avoided = avoidedLabels(draft, useProfile.getState().profile, t);
-      if (avoided.length && !await confirmAction(t('importHeadsUpTitle'), t('importHeadsUpBody', { items: avoided.join(', ') }), t('cancel'), t('reviewAnyway'))) return;
+      // Allergies come first; the softer heads-up is only asked about when no allergen matched.
+      const { allergens, avoided } = avoidedLabels(draft, useProfile.getState().profile, t);
+      if (allergens.length && !await confirmAction(t('importAllergenTitle'), t('importAllergenBody', { items: allergens.join(', ') }), t('cancel'), t('reviewAnyway'))) return;
+      if (!allergens.length && avoided.length && !await confirmAction(t('importHeadsUpTitle'), t('importHeadsUpBody', { items: avoided.join(', ') }), t('cancel'), t('reviewAnyway'))) return;
       setDraft(draft);
       router.push('/import-review');
     } catch (caught) {
