@@ -93,8 +93,10 @@ export function RecipeCollection({ favoritesOnly = false }: { favoritesOnly?: bo
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{favoritesOnly ? t('favorites') : t('recipes')}</Text>
         <View style={styles.headerActions}>
-          {recipes.length > 0 && <Pressable accessibilityRole="button" onPress={() => selecting ? stopSelecting() : setSelecting(true)} hitSlop={8} style={styles.textButton}>
-            <Text style={[styles.textButtonLabel, { color: colors.primaryText }]}>{selecting ? t('cancel') : t('select')}</Text>
+          {recipes.length > 0 && <Pressable accessibilityRole="button" onPress={() => selecting ? stopSelecting() : setSelecting(true)} hitSlop={6}
+            style={({ pressed }) => [styles.cookbookButton, { backgroundColor: selecting ? 'transparent' : colors.primarySoft, opacity: pressed ? 0.8 : 1 }]}>
+            {!selecting && <Icon name="book" color={colors.primaryText} size={16} />}
+            <Text numberOfLines={1} style={[styles.textButtonLabel, { color: colors.primaryText }]}>{selecting ? t('cancel') : t('startCookbook')}</Text>
           </Pressable>}
           {!selecting && <Pressable accessibilityRole="button" accessibilityLabel={t('addRecipe')} onPress={() => router.push('/add')} hitSlop={8} style={styles.iconButton}>
             <Icon name="plus" color={colors.text} size={22} />
@@ -155,9 +157,9 @@ export function RecipeCollection({ favoritesOnly = false }: { favoritesOnly?: bo
 const styles = StyleSheet.create({
   page: { flex: 1 },
   selectingContent: { paddingBottom: 110 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  textButton: { minHeight: 40, paddingHorizontal: 8, justifyContent: 'center' },
-  textButtonLabel: { fontSize: 15, fontWeight: '700' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
+  cookbookButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 20, paddingHorizontal: 12, flexShrink: 1 },
+  textButtonLabel: { fontSize: 14, fontWeight: '700', flexShrink: 1 },
   selectHint: { fontSize: 13, lineHeight: 19, marginTop: -8 },
   selectBar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 22, paddingVertical: 12, borderTopWidth: 1 },
   selectCount: { fontSize: 13, fontWeight: '600' },

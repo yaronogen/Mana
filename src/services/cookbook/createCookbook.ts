@@ -1,5 +1,4 @@
 import { File, Paths } from 'expo-file-system';
-import * as MailComposer from 'expo-mail-composer';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { isLocalRecipeImage } from '../images/recipeImages';
@@ -40,27 +39,12 @@ export async function createCookbookPdf(options: Omit<CookbookOptions, 'images'>
   }
 }
 
-export type CookbookDelivery = 'sent' | 'saved' | 'cancelled' | 'shared' | 'unavailable';
-
 /**
- * Opens the phone's mail app with the PDF attached and the address filled in; the user sends it from there.
- * Without a mail account it opens the share sheet instead (save to Files, AirDrop, print, other apps).
+ * Opens the share sheet with the PDF: Gmail, Mail or Outlook start a new email with it attached; Files,
+ * Print and messaging apps work too. 'unavailable' when the platform cannot share files.
  */
-export async function emailCookbook(pdfUri: string, email: string, subject: string, body: string): Promise<CookbookDelivery> {
-  if (await MailComposer.isAvailableAsync()) {
-    const result = await MailComposer.composeAsync({ recipients: email.trim() ? [email.trim()] : [], subject, body, attachments: [pdfUri] });
-    return result.status === 'saved' || result.status === 'cancelled' ? result.status : 'sent';
-  }
-  return sharePdf(pdfUri, subject);
-}
-
-export async function sharePdf(pdfUri: string, title: string): Promise<CookbookDelivery> {
+export async function sharePdf(pdfUri: string, title: string): Promise<'shared' | 'unavailable'> {
   if (!await Sharing.isAvailableAsync()) return 'unavailable';
   await Sharing.shareAsync(pdfUri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: title });
   return 'shared';
 }
-
-export const isEmailAddress = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
-
-/** False when the phone has no mail account set up (the PDF is then shared instead). */
-export const canEmail = () => MailComposer.isAvailableAsync();

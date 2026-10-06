@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -7,25 +7,27 @@ import { ManaButton } from '../src/components/ManaButton';
 import { RecipeImage } from '../src/components/RecipeImage';
 import { Screen } from '../src/components/Screen';
 import { Text, TextInput } from '../src/components/Typography';
-import { getRecipes, getSetting, setSetting } from '../src/data/database';
+import { getRecipes } from '../src/data/database';
 import type { Recipe } from '../src/domain/recipe';
-import { canEmail, createCookbookPdf, emailCookbook, isEmailAddress, sharePdf } from '../src/services/cookbook/createCookbook';
+import { createCookbookPdf, sharePdf } from '../src/services/cookbook/createCookbook';
 import { usePreferences } from '../src/stores/preferences';
 import { useProfile } from '../src/stores/profile';
 import { useManaTheme } from '../src/theme/useManaTheme';
 
-/** "My cookbook": the chosen recipes become a printable PDF that opens in the mail app, addressed to the user. */
+/**
+ * "My cookbook": the chosen recipes become a printable PDF, sent with any app the user picks from the share sheet
+ * (Gmail, Mail, Outlook, WhatsApp, Files, Print). Apple's built-in mail window is not used: it only works with an
+ * account set up in Apple Mail, so with Gmail its Send button silently left the email in the Outbox.
+ */
 export default function CookbookScreen() {
   const { ids } = useLocalSearchParams<{ ids?: string }>();
   const { colors } = useManaTheme();
   const { t } = useTranslation();
-  const router = useRouter();
   const language = usePreferences((state) => state.language);
   const unitSystem = usePreferences((state) => state.unitSystem);
   const author = useProfile((state) => state.profile.name);
   const [recipes, setRecipes] = useState<Recipe[] | null>(null);
   const [title, setTitle] = useState(() => t('myCookbook'));
-  const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -36,7 +38,6 @@ export default function CookbookScreen() {
       const byId = new Map(all.map((recipe) => [recipe.id, recipe]));
       if (active) setRecipes(wanted.map((id) => byId.get(id)).filter((recipe): recipe is Recipe => !!recipe));
     }).catch(() => { if (active) setRecipes([]); });
-    void getSetting('cookbookEmail').then((saved) => { if (active && saved) setEmail(saved); }).catch(() => undefined);
     return () => { active = false; };
   }, [ids, language]);
 
@@ -48,23 +49,13 @@ export default function CookbookScreen() {
   });
   const remove = (id: string) => setRecipes((current) => current?.filter((recipe) => recipe.id !== id) ?? current);
 
-  const create = async (delivery: 'email' | 'share') => {
+  const create = async () => {
     if (!recipes?.length) return;
-    if (delivery === 'email' && !isEmailAddress(email)) { Alert.alert(t('myCookbook'), t('cookbookEmailInvalid')); return; }
     setBusy(true);
     try {
       const cookbookTitle = title.trim() || t('myCookbook');
       const pdf = await createCookbookPdf({ title: cookbookTitle, author, language, recipes, unitSystem });
-      const count = recipes.length === 1 ? t('cookbookOneRecipe') : t('cookbookRecipeCount', { n: recipes.length });
-      if (delivery === 'share') { await sharePdf(pdf, cookbookTitle); return; }
-      await setSetting('cookbookEmail', email.trim());
-      if (!await canEmail()) {
-        await new Promise<void>((resolve) => Alert.alert(t('myCookbook'), t('cookbookNoMail'), [{ text: t('continue'), onPress: () => resolve() }]));
-        await sharePdf(pdf, cookbookTitle);
-        return;
-      }
-      const result = await emailCookbook(pdf, email, t('cookbookMailSubject', { title: cookbookTitle }), t('cookbookMailBody', { count }));
-      if (result === 'sent') Alert.alert(t('myCookbook'), t('cookbookSent'), [{ text: t('continue'), onPress: () => router.back() }]);
+      if (await sharePdf(pdf, cookbookTitle) === 'unavailable') Alert.alert(t('myCookbook'), t('cookbookUnavailable'));
     } catch {
       Alert.alert(t('myCookbook'), Platform.OS === 'web' ? t('cookbookUnavailable') : t('cookbookFailed'));
     } finally {
@@ -87,11 +78,6 @@ export default function CookbookScreen() {
         <Text style={[styles.label, { color: colors.text }]}>{t('cookbookTitleLabel')}</Text>
         <TextInput value={title} onChangeText={setTitle} maxLength={60} placeholder={t('myCookbook')} placeholderTextColor={colors.muted} style={inputStyle} />
       </View>
-      <View style={styles.field}>
-        <Text style={[styles.label, { color: colors.text }]}>{t('cookbookEmailLabel')}</Text>
-        <TextInput value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress"
-          placeholder={t('cookbookEmailPlaceholder')} placeholderTextColor={colors.muted} style={[inputStyle, { writingDirection: 'ltr' }]} />
-      </View>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('cookbookRecipesLabel', { n: recipes?.length ?? 0 })}</Text>
       {recipes === null ? <ActivityIndicator color={colors.primaryText} /> : <View style={[styles.list, { backgroundColor: colors.surface, borderColor: colors.line }]}>
@@ -108,8 +94,8 @@ export default function CookbookScreen() {
         </View>)}
       </View>}
 
-      <ManaButton title={t('createAndEmail')} onPress={() => void create('email')} disabled={!recipes?.length} icon={<Icon name="doc" color={colors.onPrimary} size={18} />} />
-      <ManaButton title={t('createAndShare')} onPress={() => void create('share')} disabled={!recipes?.length} secondary icon={<Icon name="share" color={colors.primaryText} size={18} />} />
+      <ManaButton title={t('createAndSend')} onPress={() => void create()} disabled={!recipes?.length} icon={<Icon name="share" color={colors.onPrimary} size={18} />} />
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('cookbookSendHint')}</Text>
     </Screen>
   );
 }
@@ -117,6 +103,7 @@ export default function CookbookScreen() {
 const styles = StyleSheet.create({
   center: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
   busyText: { fontSize: 15, textAlign: 'center' },
+  hint: { fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: -6 },
   title: { fontSize: 30, fontWeight: '700', letterSpacing: -0.8 },
   intro: { fontSize: 14, lineHeight: 21, marginTop: -6 },
   field: { gap: 9 },
