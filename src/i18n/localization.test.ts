@@ -1,18 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { translationFixtures } from '../services/ai/testRecipes';
+import { APP_LANGUAGES } from '../domain/recipe';
 import { categoryLabels, resources } from './resources';
 
 describe('Mana localization', () => {
-  it('provides matching UI keys for English, German, and Hebrew', () => {
+  it('provides every UI key in every app language, with the same placeholders', () => {
     const expected = Object.keys(resources.en).sort();
-    expect(Object.keys(resources.de).sort()).toEqual(expected);
-    expect(Object.keys(resources.he).sort()).toEqual(expected);
+    const placeholders = (text: string) => (text.match(/{{w+}}/g) ?? []).sort();
+    for (const language of APP_LANGUAGES) {
+      expect(Object.keys(resources[language]).sort()).toEqual(expected);
+      for (const key of expected) {
+        const value = resources[language][key as keyof typeof resources.en];
+        expect(value.trim(), `${language}.${key}`).not.toBe('');
+        expect(placeholders(value), `${language}.${key}`).toEqual(placeholders(resources.en[key as keyof typeof resources.en]));
+      }
+    }
   });
 
   it('localizes every recipe category for all supported app languages', () => {
     const categories = Object.keys(categoryLabels.en).sort();
-    expect(Object.keys(categoryLabels.de).sort()).toEqual(categories);
-    expect(Object.keys(categoryLabels.he).sort()).toEqual(categories);
+    for (const language of APP_LANGUAGES) expect(Object.keys(categoryLabels[language]).sort()).toEqual(categories);
     expect(categoryLabels.he['main-courses']).toBeTruthy();
   });
 

@@ -15,7 +15,12 @@
         "CFBundleLocalizations": [
           "en",
           "de",
-          "he"
+          "he",
+          "nl",
+          "es",
+          "it",
+          "fr",
+          "pl"
         ]
       },
       "config": {

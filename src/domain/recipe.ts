@@ -1,4 +1,12 @@
-export type AppLanguage = 'en' | 'de' | 'he';
+/** The app's interface and recipe languages. Hebrew is the only right-to-left one. */
+export const APP_LANGUAGES = ['en', 'de', 'he', 'nl', 'es', 'it', 'fr', 'pl'] as const;
+export type AppLanguage = (typeof APP_LANGUAGES)[number];
+export const isAppLanguage = (value: unknown): value is AppLanguage => typeof value === 'string' && (APP_LANGUAGES as readonly string[]).includes(value);
+
+/** Each language in its own name, for the language pickers. */
+export const LANGUAGE_NATIVE_NAMES: Record<AppLanguage, string> = {
+  en: 'English', de: 'Deutsch', he: 'עברית', nl: 'Nederlands', es: 'Español', it: 'Italiano', fr: 'Français', pl: 'Polski',
+};
 
 export type RecipeCategory =
   | 'starters'

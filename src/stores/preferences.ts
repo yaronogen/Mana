@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { getSetting, setSetting } from '../data/database';
-import type { AppLanguage } from '../domain/recipe';
+import { isAppLanguage, type AppLanguage } from '../domain/recipe';
 import type { UnitSystem } from '../domain/units';
 import i18n from '../i18n';
 import { applyLayoutDirection } from '../i18n/direction';
@@ -28,7 +28,7 @@ export const usePreferences = create<PreferencesState>((set, get) => ({
       const [language, appearance, unitSystem, onboarded] = await Promise.all([
         getSetting('language'), getSetting('appearance'), getSetting('unitSystem'), getSetting('onboarded'),
       ]);
-      const nextLanguage: AppLanguage = language === 'de' || language === 'he' ? language : 'en';
+      const nextLanguage: AppLanguage = isAppLanguage(language) ? language : 'en';
       await i18n.changeLanguage(nextLanguage);
       set({
         language: nextLanguage,

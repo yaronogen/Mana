@@ -6,6 +6,11 @@ const shareCopy: Record<AppLanguage, { ingredients: string; preparation: string;
   en: { ingredients: 'INGREDIENTS', preparation: 'PREPARATION', shared: 'Shared from Mana', servings: 'Servings', prep: 'Prep', cook: 'Cook', optional: 'optional', source: 'Source', minute: 'min' },
   de: { ingredients: 'ZUTATEN', preparation: 'ZUBEREITUNG', shared: 'Geteilt aus Mana', servings: 'Portionen', prep: 'Vorbereitung', cook: 'Garzeit', optional: 'optional', source: 'Quelle', minute: 'Min.' },
   he: { ingredients: 'מרכיבים', preparation: 'אופן ההכנה', shared: 'שותף דרך Mana', servings: 'מנות', prep: 'הכנה', cook: 'בישול', optional: 'אופציונלי', source: 'מקור', minute: 'דק׳' },
+  nl: { ingredients: 'INGREDIËNTEN', preparation: 'BEREIDING', shared: 'Gedeeld via Mana', servings: 'Porties', prep: 'Voorbereiding', cook: 'Kooktijd', optional: 'optioneel', source: 'Bron', minute: 'min' },
+  es: { ingredients: 'INGREDIENTES', preparation: 'ELABORACIÓN', shared: 'Compartido desde Mana', servings: 'Raciones', prep: 'Preparación', cook: 'Cocción', optional: 'opcional', source: 'Fuente', minute: 'min' },
+  it: { ingredients: 'INGREDIENTI', preparation: 'PROCEDIMENTO', shared: 'Condiviso da Mana', servings: 'Porzioni', prep: 'Preparazione', cook: 'Cottura', optional: 'facoltativo', source: 'Fonte', minute: 'min' },
+  fr: { ingredients: 'INGRÉDIENTS', preparation: 'PRÉPARATION', shared: 'Partagé depuis Mana', servings: 'Portions', prep: 'Préparation', cook: 'Cuisson', optional: 'facultatif', source: 'Source', minute: 'min' },
+  pl: { ingredients: 'SKŁADNIKI', preparation: 'SPOSÓB PRZYGOTOWANIA', shared: 'Udostępnione z Mana', servings: 'Porcje', prep: 'Przygotowanie', cook: 'Gotowanie', optional: 'opcjonalnie', source: 'Źródło', minute: 'min' },
 };
 
 export function formatRecipeShare(recipe: Recipe): string {

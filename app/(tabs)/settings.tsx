@@ -5,16 +5,14 @@ import { Text } from '../../src/components/Typography';
 import { AppHeader } from '../../src/components/AppHeader';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { Screen } from '../../src/components/Screen';
-import type { AppLanguage } from '../../src/domain/recipe';
+import { APP_LANGUAGES, LANGUAGE_NATIVE_NAMES } from '../../src/domain/recipe';
 import type { UnitSystem } from '../../src/domain/units';
 import { usePreferences, type Appearance } from '../../src/stores/preferences';
 import { PREMIUM_VISIBLE } from '../../src/services/billing/plan';
 import { useProfile } from '../../src/stores/profile';
 import { useManaTheme } from '../../src/theme/useManaTheme';
 
-const languageOptions: { value: AppLanguage; label: string }[] = [
-  { value: 'en', label: 'English' }, { value: 'de', label: 'Deutsch' }, { value: 'he', label: 'עברית' },
-];
+const languageOptions = APP_LANGUAGES.map((value) => ({ value, label: LANGUAGE_NATIVE_NAMES[value] }));
 
 export default function SettingsScreen() {
   const { colors } = useManaTheme();

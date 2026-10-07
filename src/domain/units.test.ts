@@ -75,3 +75,21 @@ describe('convertTemperatures', () => {
     expect(convertTemperatures('Bake at 180°C.', 'original')).toBe('Bake at 180°C.');
   });
 });
+
+describe('units in Dutch, Spanish, Italian, French and Polish', () => {
+  it('converts metric spellings and labels converted units in the recipe language', () => {
+    expect(convert('500 grammi di farina', 'us', 'it').text).toBe('1 lb di farina');
+    expect(convert('250 gramos de azúcar', 'us', 'es').text).toBe('9 oz de azúcar');
+    expect(convert('1 litr mleka', 'us', 'pl').text).toBe('4¼ szklanki mleka');
+    expect(convert('2 cups farine', 'metric', 'fr').text).toBe('480 ml farine');
+  });
+
+  it('recognises spoons and cloves as units but never converts them or cups of varying size', () => {
+    expect(parseIngredientLine('2 cucharadas de aceite').unit).toBe('cucharadas');
+    expect(parseIngredientLine('3 łyżki cukru').unit).toBe('łyżki');
+    expect(parseIngredientLine('2 spicchi d\'aglio').unit).toBe('spicchi');
+    expect(convert('1 szklanka mąki', 'metric', 'pl').original).toBeNull();
+    expect(convert('1 tazza di latte', 'metric', 'it').original).toBeNull();
+    expect(parseIngredientLine('2 chili peppers').unit).toBeNull();
+  });
+});

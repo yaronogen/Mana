@@ -1,5 +1,5 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@^0.131.0';
-import { buildRecipeUserPrompt, buildTranslateUserPrompt, RECIPE_SYSTEM_PROMPT, RECIPE_TRANSLATE_SYSTEM_PROMPT } from '../../../src/services/ai/prompts.ts';
+import { buildRecipeUserPrompt, buildTranslateUserPrompt, LANGUAGE_NAMES, RECIPE_SYSTEM_PROMPT, RECIPE_TRANSLATE_SYSTEM_PROMPT } from '../../../src/services/ai/prompts.ts';
 
 const categories = ['starters', 'soups', 'salads', 'main-courses', 'side-dishes', 'pasta-rice', 'breakfast', 'baking', 'desserts', 'snacks', 'sauces-dips', 'drinks', 'other'];
 
@@ -64,7 +64,7 @@ class ClaudeRecipeProvider implements RecipeAiProvider {
   private async structuredCall(system: string, prompt: string, schema: Record<string, unknown>, targetLanguage: string): Promise<unknown> {
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) throw new ProviderUnavailableError('provider_not_configured');
-    if (!['en', 'de', 'he'].includes(targetLanguage)) throw new ProviderUnavailableError('target_language_not_supported');
+    if (!LANGUAGE_NAMES[targetLanguage]) throw new ProviderUnavailableError('target_language_not_supported');
     const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 90_000 });
     let response: Awaited<ReturnType<typeof client.beta.messages.create>>;
     try {

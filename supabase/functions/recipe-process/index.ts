@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createRecipeAiProvider, ProviderUnavailableError } from '../_shared/recipeAiProvider.ts';
 import { fetchRecipePage, PageFetchError } from '../_shared/fetchRecipePage.ts';
+import { LANGUAGE_NAMES } from '../../../src/services/ai/prompts.ts';
 import {
   extractInstagramCaption, extractWebPage, formatInstagramForModel, formatWebRecipeForModel, instagramEmbedUrl, instagramPostCode, instagramPostUrl,
   isFetchableUrl, isRecipeInLanguage, type InstagramCaption,
@@ -11,7 +12,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
-const languages: Record<string, string> = { en: 'English', de: 'German', he: 'Hebrew' };
+const languages = LANGUAGE_NAMES;
 const maxCharacters = 30_000;
 const minPageTextCharacters = 120;
 

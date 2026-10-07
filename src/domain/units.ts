@@ -33,6 +33,11 @@ const LABELS: Record<AppLanguage, Record<Canonical, [string, string]>> = {
   en: { g: ['g', 'g'], kg: ['kg', 'kg'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['ml', 'ml'], l: ['l', 'l'], cup: ['cup', 'cups'], tbsp: ['tbsp', 'tbsp'], tsp: ['tsp', 'tsp'] },
   de: { g: ['g', 'g'], kg: ['kg', 'kg'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['ml', 'ml'], l: ['l', 'l'], cup: ['Cup', 'Cups'], tbsp: ['EL', 'EL'], tsp: ['TL', 'TL'] },
   he: { g: ['גרם', 'גרם'], kg: ['ק״ג', 'ק״ג'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['מ״ל', 'מ״ל'], l: ['ליטר', 'ליטר'], cup: ['כוס', 'כוסות'], tbsp: ['כף', 'כפות'], tsp: ['כפית', 'כפיות'] },
+  nl: { g: ['g', 'g'], kg: ['kg', 'kg'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['ml', 'ml'], l: ['l', 'l'], cup: ['cup', 'cups'], tbsp: ['el', 'el'], tsp: ['tl', 'tl'] },
+  es: { g: ['g', 'g'], kg: ['kg', 'kg'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['ml', 'ml'], l: ['l', 'l'], cup: ['taza', 'tazas'], tbsp: ['cda.', 'cdas.'], tsp: ['cdta.', 'cdtas.'] },
+  it: { g: ['g', 'g'], kg: ['kg', 'kg'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['ml', 'ml'], l: ['l', 'l'], cup: ['tazza', 'tazze'], tbsp: ['cucchiaio', 'cucchiai'], tsp: ['cucchiaino', 'cucchiaini'] },
+  fr: { g: ['g', 'g'], kg: ['kg', 'kg'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['ml', 'ml'], l: ['l', 'l'], cup: ['tasse', 'tasses'], tbsp: ['c. à s.', 'c. à s.'], tsp: ['c. à c.', 'c. à c.'] },
+  pl: { g: ['g', 'g'], kg: ['kg', 'kg'], oz: ['oz', 'oz'], lb: ['lb', 'lb'], ml: ['ml', 'ml'], l: ['l', 'l'], cup: ['szklanka', 'szklanki'], tbsp: ['łyżka', 'łyżki'], tsp: ['łyżeczka', 'łyżeczki'] },
 };
 
 const GLYPHS: [number, string][] = [[0, ''], [0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾'], [1, '']];

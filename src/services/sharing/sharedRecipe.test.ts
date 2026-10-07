@@ -34,7 +34,7 @@ describe('shared recipes', () => {
 
   it('rejects payloads that are not a valid recipe', () => {
     expect(fromSharedRecipe(null)).toBeNull();
-    expect(fromSharedRecipe({ ...toSharedRecipe(recipe), outputLanguage: 'fr' })).toBeNull();
+    expect(fromSharedRecipe({ ...toSharedRecipe(recipe), outputLanguage: 'ru' })).toBeNull();
     expect(fromSharedRecipe({ ...toSharedRecipe(recipe), ingredients: [] })).toBeNull();
   });
 

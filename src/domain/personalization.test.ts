@@ -32,6 +32,33 @@ describe('profile conflicts', () => {
     expect(profileConflicts(recipeWith('2 tbsp honey', '1 cup oat milk'), { allergies: [], diets: ['vegan'] })).toEqual(['honey']);
   });
 
+  it('finds allergens in Dutch, Spanish, Italian, French and Polish ingredient lines', () => {
+    const all = { allergies: ['nuts', 'peanuts', 'gluten', 'dairy', 'eggs', 'fish', 'shellfish', 'sesame', 'soy'] as const, diets: [] };
+    const check = (...lines: string[]) => profileConflicts(recipeWith(...lines), { ...all, allergies: [...all.allergies] });
+    expect(check('250 g bloem', '2 eieren', '100 g boter', '50 g hazelnoten', '200 g garnalen')).toEqual(['nuts', 'gluten', 'dairy', 'eggs', 'shellfish']);
+    expect(check('300 g de harina', '3 huevos', '200 ml de leche', '1 cda de salsa de soja', '100 g de salmón')).toEqual(['gluten', 'dairy', 'eggs', 'fish', 'soy']);
+    expect(check('200 g di farina', '2 uova', '80 g di burro', '50 g di pinoli', '1 cucchiaio di semi di sesamo')).toEqual(['nuts', 'gluten', 'dairy', 'eggs', 'sesame']);
+    expect(check('250 g de farine', '3 œufs', '20 cl de crème', 'beurre de cacahuète', '500 g de moules')).toEqual(['peanuts', 'gluten', 'dairy', 'eggs', 'shellfish']);
+    expect(check('500 g mąki pszennej', '2 jajka', '200 g twarogu', '100 g orzechów włoskich', 'pół łososia')).toEqual(['nuts', 'gluten', 'dairy', 'eggs', 'fish']);
+  });
+
+  it('avoids look-alikes in the new languages and English words that collide with them', () => {
+    const profile = { allergies: ['nuts', 'gluten', 'dairy'] as ('nuts' | 'gluten' | 'dairy')[], diets: [] };
+    const check = (...lines: string[]) => profileConflicts(recipeWith(...lines), profile);
+    expect(check('400 ml de leche de coco', '1 pizca de nuez moscada', '100 g de harina de arroz')).toEqual([]);
+    expect(check('400 ml di latte di cocco', '200 g di farina di riso', 'grano saraceno')).toEqual([]);
+    expect(check('lait de coco', 'noix de muscade', 'farine de riz')).toEqual([]);
+    expect(check('mleko kokosowe', 'orzeszki ziemne', 'mąka ryżowa')).toEqual([]);
+    expect(check('kokosmelk', 'rijstmeel')).toEqual([]);
+    expect(check('2 eggs at room temperature', '1 tbsp oil for the pan')).toEqual([]);
+  });
+
+  it('turns diets into warnings in the new languages', () => {
+    expect(profileConflicts(recipeWith('500 g pollo', '100 g de chorizo'), { allergies: [], diets: ['vegetarian'] })).toEqual(['meat']);
+    expect(profileConflicts(recipeWith('200 g pancetta', '50 g burro'), { allergies: [], diets: ['kosher'] })).toEqual(['pork', 'meatAndDairy']);
+    expect(profileConflicts(recipeWith('2 łyżki miodu'), { allergies: [], diets: ['vegan'] })).toEqual(['honey']);
+  });
+
   it('separates allergies from diet conflicts, counting an overlap once as an allergy', () => {
     const recipe = recipeWith('200 g Mehl', '300 g Rindfleisch', '50 g Butter');
     expect(splitConflicts(recipe, { allergies: ['gluten'], diets: ['vegetarian', 'glutenFree'] })).toEqual({ allergens: ['gluten'], other: ['meat'] });

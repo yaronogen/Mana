@@ -1,7 +1,14 @@
 import { createId, type Ingredient } from './recipe';
 import { UNIT_ALIASES } from './unitAliases';
 
-const UNITS = new Set(['g', 'kg', 'mg', 'ml', 'l', 'cl', 'dl', 'cup', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'lbs', 'el', 'tl', 'prise', 'prisen', 'stück', 'stk', 'gramm', 'kilogramm', 'milliliter', 'teelöffel', 'esslöffel', 'כף', 'כפית', 'גרם', 'מ״ל', 'gr', 'gram', 'grams', 'kilo', 'kilogram', 'kilograms', 'ounce', 'ounces', 'pound', 'pounds', 'liter', 'liters', 'litre', 'litres', 'pint', 'pints', 'quart', 'quarts', 'pfund', 'liter', 'כוס', 'כוסות', 'כפות', 'כפיות', 'ק״ג', 'ליטר', ...Object.keys(UNIT_ALIASES)]);
+const UNITS = new Set(['g', 'kg', 'mg', 'ml', 'l', 'cl', 'dl', 'cup', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'lbs', 'el', 'tl', 'prise', 'prisen', 'stück', 'stk', 'gramm', 'kilogramm', 'milliliter', 'teelöffel', 'esslöffel', 'כף', 'כפית', 'גרם', 'מ״ל', 'gr', 'gram', 'grams', 'kilo', 'kilogram', 'kilograms', 'ounce', 'ounces', 'pound', 'pounds', 'liter', 'liters', 'litre', 'litres', 'pint', 'pints', 'quart', 'quarts', 'pfund', 'liter', 'כוס', 'כוסות', 'כפות', 'כפיות', 'ק״ג', 'ליטר',
+  // Spoons, pinches and cloves in Dutch, Spanish, Italian, French and Polish (recognised as units, never converted).
+  'eetlepel', 'eetlepels', 'theelepel', 'theelepels', 'kopje', 'kopjes', 'snufje', 'teen', 'tenen',
+  'cda', 'cdas', 'cdta', 'cdtas', 'cucharada', 'cucharadas', 'cucharadita', 'cucharaditas', 'taza', 'tazas', 'pizca', 'diente', 'dientes',
+  'cucchiaio', 'cucchiai', 'cucchiaino', 'cucchiaini', 'tazza', 'tazze', 'pizzico', 'spicchio', 'spicchi',
+  'cs', 'cc', 'tasse', 'tasses', 'pincée', 'pincées', 'gousse', 'gousses',
+  'łyżka', 'łyżki', 'łyżek', 'łyżeczka', 'łyżeczki', 'łyżeczek', 'szklanka', 'szklanki', 'szklanek', 'szczypta', 'ząbek', 'ząbki', 'ząbków',
+  ...Object.keys(UNIT_ALIASES)]);
 
 function isUnit(word: string): boolean {
   return UNITS.has(word.toLocaleLowerCase().replace(/\.$/, ''));

@@ -8,16 +8,12 @@ import { ManaButton } from '../src/components/ManaButton';
 import { ProfileForm } from '../src/components/ProfileForm';
 import { Screen } from '../src/components/Screen';
 import { Wordmark } from '../src/components/Wordmark';
-import type { AppLanguage } from '../src/domain/recipe';
+import { APP_LANGUAGES, LANGUAGE_NATIVE_NAMES } from '../src/domain/recipe';
 import { usePreferences } from '../src/stores/preferences';
 import { useProfile } from '../src/stores/profile';
 import { useManaTheme } from '../src/theme/useManaTheme';
 
-const languages: { id: AppLanguage; native: string }[] = [
-  { id: 'en', native: 'English' },
-  { id: 'de', native: 'Deutsch' },
-  { id: 'he', native: 'עברית' },
-];
+const languages = APP_LANGUAGES.map((id) => ({ id, native: LANGUAGE_NATIVE_NAMES[id] }));
 
 export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
@@ -124,8 +120,9 @@ const styles = StyleSheet.create({
   main: { flex: 1, paddingTop: 12 },
   title: { fontSize: 30, fontWeight: '700', letterSpacing: -0.7, lineHeight: 37 },
   body: { fontSize: 15, lineHeight: 23, marginTop: 10, maxWidth: 380 },
-  languageList: { gap: 11, marginTop: 28 },
-  languageCard: { minHeight: 62, borderRadius: 16, borderWidth: 1.5, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  // Eight languages in two columns, so the list fits on small phones.
+  languageList: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 24 },
+  languageCard: { width: '48%', flexGrow: 1, minHeight: 56, borderRadius: 16, borderWidth: 1.5, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
   radio: { height: 21, width: 21, borderRadius: 11, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   radioDot: { height: 11, width: 11, borderRadius: 6 },
   languageName: { fontSize: 16, fontWeight: '600' }, languageHint: { fontSize: 12, marginTop: 2 },

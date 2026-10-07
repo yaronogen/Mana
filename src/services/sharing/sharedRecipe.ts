@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { createId, NEW_RECIPE_STATS, type Recipe, type RecipeCategory } from '../../domain/recipe';
+import { APP_LANGUAGES, createId, NEW_RECIPE_STATS, type Recipe, type RecipeCategory } from '../../domain/recipe';
 import { recipeDraftSchema } from '../ai/schemas';
 
 /**
  * A recipe sent from one Mana user to another through a share link. Only the recipe itself travels:
  * the sender's favorite, rating, cook log and photos stored on the phone stay on the sender's device.
  */
-export const sharedRecipeSchema = recipeDraftSchema.extend({ outputLanguage: z.enum(['en', 'de', 'he']) });
+export const sharedRecipeSchema = recipeDraftSchema.extend({ outputLanguage: z.enum(APP_LANGUAGES) });
 export type SharedRecipe = z.infer<typeof sharedRecipeSchema>;
 
 /** Public page that opens a share link in the app (or points to the store when Mana is not installed). */
