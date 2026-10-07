@@ -36,6 +36,15 @@ function isSharedRecipeShape(value: unknown): boolean {
     && Array.isArray(recipe.steps) && recipe.steps.length > 0 && recipe.steps.length <= 80;
 }
 
+/** Compares two secrets without leaking their length or content through timing: equal-length hashes, every byte checked. */
+async function sameSecret(given: string, expected: string): Promise<boolean> {
+  const hash = async (value: string) => new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
+  const [a, b] = await Promise.all([hash(given), hash(expected)]);
+  let difference = 0;
+  for (let index = 0; index < a.length; index += 1) difference |= a[index] ^ b[index];
+  return difference === 0 && given.length > 0;
+}
+
 /** The caption of a public Instagram post: the embed page first, then the post page. Null when neither has it. */
 async function readInstagramCaption(code: string): Promise<InstagramCaption | null> {
   for (const url of [instagramEmbedUrl(code), instagramPostUrl(code)]) {
@@ -71,6 +80,19 @@ Deno.serve(async (request) => {
     const requestBody: unknown = await request.json();
     if (!requestBody || typeof requestBody !== 'object') return json(400, { error: 'invalid_request' });
     const body = requestBody as { action?: unknown; text?: unknown; url?: unknown; targetLanguage?: unknown; content?: unknown; recipe?: unknown; code?: unknown };
+
+    // Tester code from Settings: unlocks the tester allowance (20 imports a month). The code is a server secret.
+    if (body.action === 'redeem') {
+      const expected = Deno.env.get('TESTER_CODE')?.trim();
+      if (!expected) return json(503, { error: 'service_unavailable' });
+      const given = typeof body.code === 'string' ? body.code.trim().slice(0, 100) : '';
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: outcome, error: redeemError } = await admin.rpc('redeem_tester_code', { p_user_id: user.id, p_valid: await sameSecret(given, expected) });
+      if (redeemError) return json(503, { error: 'service_unavailable' });
+      if (outcome === 'limit') return json(429, { error: 'too_many_attempts' });
+      if (outcome !== 'ok') return json(403, { error: 'invalid_code' });
+      return json(200, { ok: true });
+    }
 
     // Stores a copy of a recipe for another Mana user and returns its link code. Does not consume an import.
     // The receiving app validates the recipe fully (Zod) before showing it; this is a shape and size check.

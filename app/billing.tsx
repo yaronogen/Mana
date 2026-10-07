@@ -33,7 +33,8 @@ export default function BillingScreen() {
     return () => { active = false; };
   }, []));
 
-  const plan: PlanId = usage?.plan ?? 'free';
+  // Testers see the free plan here; their larger allowance shows in the usage line.
+  const plan: PlanId = usage?.plan === 'premium' ? 'premium' : 'free';
   const notYet = () => {
     if (Platform.OS === 'web') globalThis.alert?.(`${t('purchaseSoonTitle')}\n\n${t('purchaseSoonBody')}`);
     else Alert.alert(t('purchaseSoonTitle'), t('purchaseSoonBody'));

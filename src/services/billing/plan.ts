@@ -5,6 +5,8 @@ import { ensureAnonymousSession, supabase } from '../ai/supabaseClient';
 export const PLANS = {
   free: { importsPerMonth: 3 },
   premium: { importsPerMonth: 50, monthlyPrice: '€4.99', yearlyPrice: '€39.99' },
+  /** Unlocked with a tester code in Settings (see redeemTesterCode). */
+  tester: { importsPerMonth: 20 },
 } as const;
 
 export type PlanId = keyof typeof PLANS;
@@ -16,7 +18,7 @@ export type PlanId = keyof typeof PLANS;
 export const PREMIUM_VISIBLE = false;
 
 const usageSchema = z.object({
-  plan: z.enum(['free', 'premium']),
+  plan: z.enum(['free', 'premium', 'tester']),
   used: z.number().int().nonnegative(),
   limit: z.number().int().positive(),
   resetsAt: z.string(),
@@ -35,6 +37,23 @@ export async function fetchImportUsage(): Promise<ImportUsage | null> {
     return parsed.success ? parsed.data : null;
   } catch {
     return null;
+  }
+}
+
+export type RedeemResult = 'ok' | 'invalid' | 'limit' | 'unavailable';
+
+/** Redeems a tester code: on success this account gets the tester allowance (20 imports a month). */
+export async function redeemTesterCode(code: string): Promise<RedeemResult> {
+  if (!supabase || !code.trim()) return code.trim() ? 'unavailable' : 'invalid';
+  try {
+    await ensureAnonymousSession();
+    const result = await supabase.functions.invoke('recipe-process', { body: { action: 'redeem', code: code.trim() } });
+    if (!result.error) return 'ok';
+    const status = typeof result.error.context === 'object' && result.error.context !== null && 'status' in result.error.context
+      ? Number(result.error.context.status) : undefined;
+    return status === 403 ? 'invalid' : status === 429 ? 'limit' : 'unavailable';
+  } catch {
+    return 'unavailable';
   }
 }
 

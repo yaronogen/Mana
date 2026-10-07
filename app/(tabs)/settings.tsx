@@ -9,6 +9,7 @@ import { APP_LANGUAGES, LANGUAGE_NATIVE_NAMES } from '../../src/domain/recipe';
 import type { UnitSystem } from '../../src/domain/units';
 import { usePreferences, type Appearance } from '../../src/stores/preferences';
 import { PREMIUM_VISIBLE } from '../../src/services/billing/plan';
+import { TesterCode } from '../../src/components/TesterCode';
 import { useProfile } from '../../src/stores/profile';
 import { useManaTheme } from '../../src/theme/useManaTheme';
 
@@ -89,6 +90,7 @@ export default function SettingsScreen() {
         })}
       </View>
 
+      <TesterCode />
       <Text style={[styles.version, { color: colors.muted }]}>{t('version')} 1.0.0</Text>
     </Screen>
   );
