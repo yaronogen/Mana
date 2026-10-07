@@ -1,5 +1,6 @@
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import type { GroceryItem } from '../domain/groceries';
+import type { NutritionEstimate } from '../domain/nutrition';
 import { createId, type AppLanguage, type CookLogEntry, type Recipe } from '../domain/recipe';
 import { applyTranslation, type RecipeTranslation, type RecipeTranslationContent } from '../domain/recipeTranslation';
 
@@ -53,6 +54,16 @@ async function getDatabase(): Promise<SQLiteDatabase> {
         source_fingerprint TEXT NOT NULL,
         content TEXT NOT NULL,
         PRIMARY KEY (recipe_id, language)
+      );
+      CREATE TABLE IF NOT EXISTS recipe_nutrition (
+        recipe_id TEXT PRIMARY KEY NOT NULL,
+        source_fingerprint TEXT NOT NULL,
+        kcal_per_serving REAL,
+        servings INTEGER,
+        servings_estimated INTEGER NOT NULL DEFAULT 0,
+        confidence TEXT NOT NULL,
+        note TEXT,
+        language TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS grocery_items (
         id TEXT PRIMARY KEY NOT NULL,
@@ -191,6 +202,34 @@ export async function deleteRecipe(id: string): Promise<void> {
   await database.runAsync('DELETE FROM recipes WHERE id = ?', id);
   await database.runAsync('DELETE FROM cook_log WHERE recipe_id = ?', id);
   await database.runAsync('DELETE FROM recipe_translations WHERE recipe_id = ?', id);
+  await database.runAsync('DELETE FROM recipe_nutrition WHERE recipe_id = ?', id);
+}
+
+/** The saved calorie estimate for a recipe (fresh or stale: compare with isNutritionFresh). */
+export async function getNutrition(recipeId: string): Promise<NutritionEstimate | null> {
+  const database = await getDatabase();
+  const row = await database.getFirstAsync<Record<string, unknown>>('SELECT * FROM recipe_nutrition WHERE recipe_id = ?', recipeId);
+  if (!row) return null;
+  const confidence = String(row.confidence);
+  return {
+    recipeId: String(row.recipe_id), sourceFingerprint: String(row.source_fingerprint),
+    kcalPerServing: row.kcal_per_serving == null ? null : Number(row.kcal_per_serving),
+    servings: row.servings == null ? null : Number(row.servings), servingsEstimated: Number(row.servings_estimated) === 1,
+    confidence: confidence === 'high' || confidence === 'medium' ? confidence : 'low',
+    note: (row.note as string | null) ?? null, language: row.language as AppLanguage,
+  };
+}
+
+export async function saveNutrition(estimate: NutritionEstimate): Promise<void> {
+  const database = await getDatabase();
+  await database.runAsync(
+    `INSERT INTO recipe_nutrition (recipe_id, source_fingerprint, kcal_per_serving, servings, servings_estimated, confidence, note, language)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(recipe_id) DO UPDATE SET source_fingerprint=excluded.source_fingerprint, kcal_per_serving=excluded.kcal_per_serving,
+       servings=excluded.servings, servings_estimated=excluded.servings_estimated, confidence=excluded.confidence, note=excluded.note, language=excluded.language`,
+    estimate.recipeId, estimate.sourceFingerprint, estimate.kcalPerServing, estimate.servings, estimate.servingsEstimated ? 1 : 0,
+    estimate.confidence, estimate.note, estimate.language,
+  );
 }
 
 /** Records that a recipe was cooked, with an optional 1–5 rating and a personal note. */

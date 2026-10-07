@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { RECIPE_CATEGORIES, type AppLanguage, type Recipe } from '../../domain/recipe';
+import { nutritionFingerprint, type NutritionEstimate } from '../../domain/nutrition';
 import { recipeFingerprint, type RecipeTranslation } from '../../domain/recipeTranslation';
 
 export const recipeDraftSchema = z.object({
@@ -56,4 +57,19 @@ export function parseRecipeTranslation(recipe: Recipe, language: AppLanguage, pa
   const parsed = recipeTranslationSchema.safeParse(payload);
   if (!parsed.success || parsed.data.ingredients.length !== recipe.ingredients.length || parsed.data.steps.length !== recipe.steps.length) return null;
   return { ...parsed.data, recipeId: recipe.id, language, sourceFingerprint: recipeFingerprint(recipe) };
+}
+
+/** A calorie estimate from the recipe service. Implausible values are rejected rather than shown. */
+export const nutritionResultSchema = z.object({
+  kcalPerServing: z.number().finite().positive().max(10_000).nullable(),
+  servings: z.number().int().positive().max(100).nullable(),
+  servingsEstimated: z.boolean(),
+  confidence: z.enum(['low', 'medium', 'high']),
+  note: z.string().trim().max(300).nullable().transform((note) => note || null),
+});
+
+export function parseNutritionEstimate(recipe: Recipe, language: AppLanguage, payload: unknown): NutritionEstimate | null {
+  const parsed = nutritionResultSchema.safeParse(payload);
+  if (!parsed.success) return null;
+  return { ...parsed.data, recipeId: recipe.id, sourceFingerprint: nutritionFingerprint(recipe), language };
 }

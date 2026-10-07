@@ -1,5 +1,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@^0.131.0';
-import { buildRecipeUserPrompt, buildTranslateUserPrompt, LANGUAGE_NAMES, RECIPE_SYSTEM_PROMPT, RECIPE_TRANSLATE_SYSTEM_PROMPT } from '../../../src/services/ai/prompts.ts';
+import {
+  buildNutritionUserPrompt, buildRecipeUserPrompt, buildTranslateUserPrompt, LANGUAGE_NAMES, NUTRITION_SYSTEM_PROMPT, RECIPE_SYSTEM_PROMPT, RECIPE_TRANSLATE_SYSTEM_PROMPT,
+} from '../../../src/services/ai/prompts.ts';
 
 const categories = ['starters', 'soups', 'salads', 'main-courses', 'side-dishes', 'pasta-rice', 'breakfast', 'baking', 'desserts', 'snacks', 'sauces-dips', 'drinks', 'other'];
 
@@ -33,10 +35,21 @@ const translationSchema = {
   },
 };
 
+const nutritionSchema = {
+  type: 'object', additionalProperties: false,
+  required: ['kcalPerServing', 'servings', 'servingsEstimated', 'confidence', 'note'],
+  properties: {
+    kcalPerServing: { type: ['number', 'null'] }, servings: { type: ['integer', 'null'] }, servingsEstimated: { type: 'boolean' },
+    confidence: { type: 'string', enum: ['low', 'medium', 'high'] }, note: { type: ['string', 'null'] },
+  },
+};
+
 export type RecipeAiProvider = {
   extractAndTranslate: (sourceText: string, targetLanguage: string) => Promise<{ hasRecipe: boolean; recipe: unknown | null }>;
   /** Translates the wording of an already saved recipe (see translatableContent in the app). */
   translateSaved: (contentJson: string, targetLanguage: string) => Promise<unknown>;
+  /** Calories per serving from ingredient lines and servings (see nutritionInput in the app). */
+  estimateNutrition: (contentJson: string, targetLanguage: string) => Promise<unknown>;
 };
 
 const envelopeSchema = {
@@ -60,8 +73,13 @@ class ClaudeRecipeProvider implements RecipeAiProvider {
     return this.structuredCall(RECIPE_TRANSLATE_SYSTEM_PROMPT, buildTranslateUserPrompt(contentJson, targetLanguage), translationSchema, targetLanguage);
   }
 
-  /** One structured-output call; returns the parsed JSON. */
-  private async structuredCall(system: string, prompt: string, schema: Record<string, unknown>, targetLanguage: string): Promise<unknown> {
+  estimateNutrition(contentJson: string, targetLanguage: string) {
+    // Same model as imports unless CLAUDE_NUTRITION_MODEL picks another one for this simpler task.
+    return this.structuredCall(NUTRITION_SYSTEM_PROMPT, buildNutritionUserPrompt(contentJson, targetLanguage), nutritionSchema, targetLanguage, Deno.env.get('CLAUDE_NUTRITION_MODEL'));
+  }
+
+  /** One structured-output call; returns the parsed JSON. `content` is the user turn: text, or text with images. */
+  private async structuredCall(system: string, content: string | Anthropic.Beta.BetaContentBlockParam[], schema: Record<string, unknown>, targetLanguage: string, model?: string): Promise<unknown> {
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) throw new ProviderUnavailableError('provider_not_configured');
     if (!LANGUAGE_NAMES[targetLanguage]) throw new ProviderUnavailableError('target_language_not_supported');
@@ -69,7 +87,7 @@ class ClaudeRecipeProvider implements RecipeAiProvider {
     let response: Awaited<ReturnType<typeof client.beta.messages.create>>;
     try {
       response = await client.beta.messages.create({
-        model: Deno.env.get('CLAUDE_MODEL') ?? 'claude-opus-5-5',
+        model: model || (Deno.env.get('CLAUDE_MODEL') ?? 'claude-opus-5-5'),
         max_tokens: 16000,
         // Extracting or translating an already-compact recipe needs little reasoning; low effort keeps token use down.
         output_config: {
@@ -80,7 +98,7 @@ class ClaudeRecipeProvider implements RecipeAiProvider {
         betas: ['server-side-fallback-2026-07-01'],
         fallbacks: 'default',
         system,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content }],
       });
     } catch (error) {
       if (error instanceof Anthropic.APIError) throw new ProviderUnavailableError(`provider_request_failed_${error.status ?? 'network'}`);

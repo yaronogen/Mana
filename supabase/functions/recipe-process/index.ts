@@ -142,6 +142,23 @@ Deno.serve(async (request) => {
       return json(200, await createRecipeAiProvider().translateSaved(contentJson, targetLanguage));
     }
 
+    // Estimates calories per serving from a saved recipe's ingredient lines. Own monthly allowance; never an import.
+    if (body.action === 'nutrition') {
+      const content = body.content as { servings?: unknown; ingredients?: unknown } | null;
+      if (!content || typeof content !== 'object' || !Array.isArray(content.ingredients) || !content.ingredients.length
+        || content.ingredients.length > 100 || !content.ingredients.every((line) => typeof line === 'string')
+        || (content.servings !== null && !(Number.isInteger(content.servings) && Number(content.servings) > 0))) {
+        return json(400, { error: 'invalid_request' });
+      }
+      const contentJson = JSON.stringify({ servings: content.servings, ingredients: content.ingredients });
+      if (contentJson.length > maxCharacters) return json(413, { error: 'text_too_long' });
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: allowed, error: quotaError } = await admin.rpc('consume_nutrition_estimate', { p_user_id: user.id });
+      if (quotaError) return json(503, { error: 'service_unavailable' });
+      if (!allowed) return json(429, { error: 'nutrition_limit_reached' });
+      return json(200, await createRecipeAiProvider().estimateNutrition(contentJson, targetLanguage));
+    }
+
     let pageUrl: string | null = null;
     let imageUrl: string | null = null;
     let text: string;

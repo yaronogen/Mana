@@ -53,6 +53,8 @@ describe('cookbook PDF', () => {
     expect(us).toContain('Bake at 180°C (350°F) for 5 minutes.');
     expect(us).toContain('size: letter');
     expect(paperFor('metric')).toMatchObject({ width: 595, height: 842 });
+    expect(buildCookbookHtml({ title: 'x', author: '', language: 'en', recipes: [pasta], kcal: { pasta: 520 } })).toContain('≈ 520 kcal per serving');
+    expect(original).not.toContain('kcal');
   });
 
   it('escapes recipe text and embeds photos only when given', () => {

@@ -18,6 +18,8 @@ export type CookbookOptions = {
   recipes: Recipe[];
   /** Recipe photos as data: URIs, keyed by recipe id; recipes without one get no photo. */
   images?: Record<string, string>;
+  /** Estimated kcal per serving, keyed by recipe id; only fresh estimates are passed. */
+  kcal?: Record<string, number>;
   unitSystem?: UnitSystem;
   date?: Date;
 };
@@ -47,6 +49,7 @@ function recipePage(recipe: Recipe, number: number, options: CookbookOptions): s
     recipe.preparationTime !== null ? `${copy.prepTime}: ${recipe.preparationTime} ${copy.minutes}` : null,
     recipe.cookingTime !== null ? `${copy.cookTime}: ${recipe.cookingTime} ${copy.minutes}` : null,
     recipe.totalTime !== null ? `${copy.totalTime}: ${recipe.totalTime} ${copy.minutes}` : null,
+    options.kcal?.[recipe.id] ? fill(copy.kcalPerServing, { kcal: options.kcal[recipe.id] }) : null,
   ].filter((fact): fact is string => fact !== null);
   const ingredients = recipe.ingredients.map((ingredient) => {
     const shown = displayIngredient(ingredient, { factor: 1, unitSystem, language });

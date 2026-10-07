@@ -14,6 +14,7 @@ import { RecipeImage } from '../../../src/components/RecipeImage';
 import { Screen } from '../../../src/components/Screen';
 import { addGroceries, getCookLog, getRecipe, logCook, setRating, toggleFavorite } from '../../../src/data/database';
 import { groceryItemsFromRecipe } from '../../../src/domain/groceries';
+import { isNutritionFresh, roundKcal } from '../../../src/domain/nutrition';
 import { displayIngredient, servingsFactor } from '../../../src/domain/scaling';
 import { convertTemperatures } from '../../../src/domain/units';
 import { formatIngredient } from '../../../src/domain/ingredientText';
@@ -23,6 +24,7 @@ import { deleteRecipeWithImage, pickRecipeImage, saveRecipeWithImage } from '../
 import { formatRecipeShare } from '../../../src/services/sharing/formatRecipeShare';
 import { createRecipeLink, RecipeLinkError } from '../../../src/services/sharing/recipeLinks';
 import { usePreferences } from '../../../src/stores/preferences';
+import { useNutrition } from '../../../src/stores/nutrition';
 import { useProfile } from '../../../src/stores/profile';
 import { useTranslations } from '../../../src/stores/translations';
 import { useManaTheme } from '../../../src/theme/useManaTheme';
@@ -50,6 +52,9 @@ export default function RecipeDetailScreen() {
   const translationStatus = useTranslations((state) => state.status);
   const translatingThis = useTranslations((state) => !!state.pending[id]);
   const translateOne = useTranslations((state) => state.translateOne);
+  const nutrition = useNutrition((state) => state.estimates[id]);
+  const estimatingKcal = useNutrition((state) => !!state.pending[id]);
+  const ensureNutrition = useNutrition((state) => state.ensure);
 
   const reload = useCallback(async () => {
     const [stored, shown] = await Promise.all([getRecipe(id), getRecipe(id, language)]);
@@ -68,9 +73,11 @@ export default function RecipeDetailScreen() {
       setRecipe(shown);
       // Saved in another language and not translated yet (or edited since): translate it now.
       if (stored && shown && shown.outputLanguage !== language) void translateOne(stored, language);
+      // Calories are estimated once per recipe (and again only after its ingredients or servings change).
+      if (stored) void ensureNutrition(stored, language);
     }).catch(() => { if (active) { setSaved(null); setRecipe(null); } }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [id, language, translationVersion, translateOne]);
+  }, [id, language, translationVersion, translateOne, ensureNutrition]);
   useFocusEffect(load);
 
   // The tab keeps this screen mounted; never show the previous recipe while another one opens.
@@ -137,6 +144,14 @@ export default function RecipeDetailScreen() {
   const targetServings = recipe.servings === null ? null
     : servingsChoice?.id === recipe.id ? servingsChoice.n : householdSize ?? recipe.servings;
   const factor = servingsFactor(recipe.servings, targetServings);
+  // An estimate counts only while it matches the saved ingredients and servings.
+  const freshNutrition = isNutritionFresh(saved, nutrition) ? nutrition : null;
+  const kcal = freshNutrition?.kcalPerServing != null ? roundKcal(freshNutrition.kcalPerServing) : null;
+  const showKcalInfo = () => Alert.alert(t('kcalInfoTitle'), [
+    t('kcalInfoBody'),
+    freshNutrition?.servingsEstimated && freshNutrition.servings ? t('kcalServingsAssumed', { n: freshNutrition.servings }) : null,
+    freshNutrition?.note && freshNutrition.language === language ? freshNutrition.note : null,
+  ].filter(Boolean).join('\n\n'));
   const changeServings = (delta: number) => { if (targetServings !== null) setServingsChoice({ id: recipe.id, n: Math.min(48, Math.max(1, targetServings + delta)) }); };
   const circle = (icon: Parameters<typeof Icon>[0]['name'], label: string, onPress: () => void, tint = colors.text) => (
     <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={6} style={[styles.circle, { backgroundColor: colors.surface }]}>
@@ -200,6 +215,11 @@ export default function RecipeDetailScreen() {
             </>}
           </View>}
           {factor !== 1 && <Text style={[styles.scaledNote, { color: colors.muted }]}>{t('scaledFor', { n: targetServings, base: recipe.servings })}</Text>}
+          {kcal !== null ? <Pressable accessibilityRole="button" accessibilityHint={t('kcalInfoTitle')} onPress={showKcalInfo} hitSlop={6} style={styles.kcalRow}>
+            <Text style={[styles.kcalText, { color: colors.text }]}>{t('kcalPerServing', { kcal })}</Text>
+            <Text style={[styles.kcalLabel, { color: colors.muted }]}>· {freshNutrition?.confidence === 'low' ? t('kcalRoughLabel') : t('kcalEstimateLabel')}</Text>
+            <Icon name="info" color={colors.muted} size={15} />
+          </Pressable> : estimatingKcal ? <Text style={[styles.kcalLabel, { color: colors.muted }]}>{t('kcalEstimating')}</Text> : null}
 
           {!!recipe.tags.length && <View style={styles.tags}>{recipe.tags.map((tag) => <View key={tag} style={[styles.tag, { backgroundColor: colors.primarySoft }]}><Text style={[styles.tagText, { color: colors.primaryText }]}>{tag}</Text></View>)}</View>}
 
@@ -285,6 +305,8 @@ const styles = StyleSheet.create({
   servingsButton: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   servingsGlyph: { fontSize: 17, fontWeight: '700', lineHeight: 20 },
   scaledNote: { fontSize: 12, lineHeight: 17, marginTop: -6 },
+  kcalRow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', minHeight: 32, marginTop: -6 },
+  kcalText: { fontSize: 14, fontWeight: '700' }, kcalLabel: { fontSize: 13 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, tag: { borderRadius: 14, paddingHorizontal: 11, paddingVertical: 6 }, tagText: { fontSize: 12, fontWeight: '600' },
   sectionTitle: { fontSize: 19, fontWeight: '700', marginTop: 8 }, count: { fontSize: 14, fontWeight: '500' },
   ingredientList: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 14 },
