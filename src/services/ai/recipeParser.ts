@@ -1,7 +1,7 @@
 import { createId, NEW_RECIPE_STATS, type AppLanguage, type Recipe, type RecipeCategory } from '../../domain/recipe';
 import { extractRecipeUrl, instagramPostCode } from '../import/webRecipe';
 import { recipeFromWebRecipe, webRecipeSchema } from '../import/webRecipeDraft';
-import { recipeDraftSchema } from './schemas';
+import { recipeDraftSchema, type RecipeDraft } from './schemas';
 import { ensureAnonymousSession, supabase } from './supabaseClient';
 
 export class RecipeImportError extends Error {
@@ -48,13 +48,17 @@ export async function parseRecipeText(text: string, targetLanguage: AppLanguage)
     return recipeFromWebRecipe(source.data, targetLanguage);
   }
 
-  let parsed: ReturnType<typeof recipeDraftSchema.parse>;
+  let parsed: RecipeDraft;
   try {
     parsed = recipeDraftSchema.parse(payload);
   } catch {
     throw new RecipeImportError('invalid_response');
   }
+  return recipeFromDraft(parsed, targetLanguage);
+}
 
+/** A validated recipe draft from the recipe service as a new, unsaved recipe in `targetLanguage`. */
+export function recipeFromDraft(parsed: RecipeDraft, targetLanguage: AppLanguage): Recipe {
   const now = new Date().toISOString();
   const { imageUrl, ...fields } = parsed;
   return {

@@ -1,6 +1,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@^0.131.0';
 import {
-  buildNutritionUserPrompt, buildRecipeUserPrompt, buildTranslateUserPrompt, LANGUAGE_NAMES, NUTRITION_SYSTEM_PROMPT, RECIPE_SYSTEM_PROMPT, RECIPE_TRANSLATE_SYSTEM_PROMPT,
+  buildNutritionUserPrompt, buildPhotoUserPrompt, buildRecipeUserPrompt, buildTranslateUserPrompt, LANGUAGE_NAMES, NUTRITION_SYSTEM_PROMPT, RECIPE_PHOTO_SYSTEM_PROMPT,
+  RECIPE_SYSTEM_PROMPT, RECIPE_TRANSLATE_SYSTEM_PROMPT,
 } from '../../../src/services/ai/prompts.ts';
 
 const categories = ['starters', 'soups', 'salads', 'main-courses', 'side-dishes', 'pasta-rice', 'breakfast', 'baking', 'desserts', 'snacks', 'sauces-dips', 'drinks', 'other'];
@@ -48,6 +49,8 @@ export type RecipeAiProvider = {
   extractAndTranslate: (sourceText: string, targetLanguage: string) => Promise<{ hasRecipe: boolean; recipe: unknown | null }>;
   /** Translates the wording of an already saved recipe (see translatableContent in the app). */
   translateSaved: (contentJson: string, targetLanguage: string) => Promise<unknown>;
+  /** Reads one recipe from 1–3 photos, with questions about anything it could not make out. */
+  extractFromImages: (images: RecipePhotoInput[], targetLanguage: string) => Promise<{ hasRecipe: boolean; recipe: unknown | null; clarifications: unknown[] }>;
   /** Calories per serving from ingredient lines and servings (see nutritionInput in the app). */
   estimateNutrition: (contentJson: string, targetLanguage: string) => Promise<unknown>;
 };
@@ -56,6 +59,24 @@ const envelopeSchema = {
   type: 'object', additionalProperties: false, required: ['hasRecipe', 'recipe'],
   properties: { hasRecipe: { type: 'boolean' }, recipe: { anyOf: [recipeSchema, { type: 'null' }] } },
 };
+
+const clarificationSchema = {
+  type: 'object', additionalProperties: false, required: ['target', 'index', 'question', 'options'],
+  properties: {
+    target: { type: 'string', enum: ['title', 'ingredient', 'step'] }, index: { type: ['integer', 'null'] },
+    question: { type: 'string' }, options: { type: 'array', items: { type: 'string' } },
+  },
+};
+
+const photoEnvelopeSchema = {
+  type: 'object', additionalProperties: false, required: ['hasRecipe', 'recipe', 'clarifications'],
+  properties: {
+    hasRecipe: { type: 'boolean' }, recipe: { anyOf: [recipeSchema, { type: 'null' }] },
+    clarifications: { type: 'array', items: clarificationSchema },
+  },
+};
+
+export type RecipePhotoInput = { mediaType: 'image/jpeg' | 'image/png' | 'image/webp'; data: string };
 
 export class ProviderUnavailableError extends Error {}
 
@@ -73,13 +94,26 @@ class ClaudeRecipeProvider implements RecipeAiProvider {
     return this.structuredCall(RECIPE_TRANSLATE_SYSTEM_PROMPT, buildTranslateUserPrompt(contentJson, targetLanguage), translationSchema, targetLanguage);
   }
 
+  async extractFromImages(images: RecipePhotoInput[], targetLanguage: string) {
+    const content: Anthropic.Beta.BetaContentBlockParam[] = [
+      ...images.map((image): Anthropic.Beta.BetaContentBlockParam => ({ type: 'image', source: { type: 'base64', media_type: image.mediaType, data: image.data } })),
+      { type: 'text', text: buildPhotoUserPrompt(targetLanguage, images.length) },
+    ];
+    // Reading handwriting and old units needs more care than tidying text, so photos run at medium effort.
+    const result = await this.structuredCall(RECIPE_PHOTO_SYSTEM_PROMPT, content, photoEnvelopeSchema, targetLanguage, undefined, Deno.env.get('CLAUDE_PHOTO_EFFORT') ?? 'medium');
+    if (!result || typeof result !== 'object') throw new ProviderUnavailableError('invalid_provider_response');
+    const structured = result as { hasRecipe?: unknown; recipe?: unknown; clarifications?: unknown };
+    if (typeof structured.hasRecipe !== 'boolean') throw new ProviderUnavailableError('invalid_provider_response');
+    return { hasRecipe: structured.hasRecipe, recipe: structured.recipe ?? null, clarifications: Array.isArray(structured.clarifications) ? structured.clarifications : [] };
+  }
+
   estimateNutrition(contentJson: string, targetLanguage: string) {
     // Same model as imports unless CLAUDE_NUTRITION_MODEL picks another one for this simpler task.
     return this.structuredCall(NUTRITION_SYSTEM_PROMPT, buildNutritionUserPrompt(contentJson, targetLanguage), nutritionSchema, targetLanguage, Deno.env.get('CLAUDE_NUTRITION_MODEL'));
   }
 
   /** One structured-output call; returns the parsed JSON. `content` is the user turn: text, or text with images. */
-  private async structuredCall(system: string, content: string | Anthropic.Beta.BetaContentBlockParam[], schema: Record<string, unknown>, targetLanguage: string, model?: string): Promise<unknown> {
+  private async structuredCall(system: string, content: string | Anthropic.Beta.BetaContentBlockParam[], schema: Record<string, unknown>, targetLanguage: string, model?: string, effort?: string): Promise<unknown> {
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) throw new ProviderUnavailableError('provider_not_configured');
     if (!LANGUAGE_NAMES[targetLanguage]) throw new ProviderUnavailableError('target_language_not_supported');
@@ -91,7 +125,7 @@ class ClaudeRecipeProvider implements RecipeAiProvider {
         max_tokens: 16000,
         // Extracting or translating an already-compact recipe needs little reasoning; low effort keeps token use down.
         output_config: {
-          effort: (Deno.env.get('CLAUDE_EFFORT') ?? 'low') as 'low' | 'medium' | 'high',
+          effort: (effort ?? Deno.env.get('CLAUDE_EFFORT') ?? 'low') as 'low' | 'medium' | 'high',
           format: { type: 'json_schema', schema },
         },
         // If a safety classifier declines a request, the API retries it on a fallback model inside the same call.

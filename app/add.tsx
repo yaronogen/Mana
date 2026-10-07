@@ -27,6 +27,7 @@ export default function AddRecipeScreen() {
         <Text style={[styles.body, { color: colors.muted }]}>{t('addIntro')}</Text>
       </View>
       {option('link', t('pasteRecipe'), t('pasteCardBody'), () => router.push('/paste'), colors.primarySoft, colors.primaryText)}
+      {option('camera', t('photoRecipe'), t('photoCardBody'), () => router.push('/photo-import'), colors.primarySoft, colors.primaryText)}
       {option('edit', t('writeRecipe'), t('writeCardBody'), () => router.push('/editor'), colors.accentSoft, colors.accentText)}
       <View style={[styles.privacy, { backgroundColor: colors.primarySoft }]}>
         <Icon name="lock" color={colors.primaryText} size={18} />

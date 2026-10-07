@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from './Typography';
+import { openQuestionWarnings, type Clarification } from '../domain/clarifications';
 import { formatIngredient, parseIngredientLine } from '../domain/ingredientText';
 import { createId, NEW_RECIPE_STATS, RECIPE_CATEGORIES, type Recipe, type RecipeCategory, type RecipeStep } from '../domain/recipe';
 import { categoryLabels, resources } from '../i18n/resources';
@@ -25,7 +26,11 @@ function blankRecipe(language: Recipe['outputLanguage'], sourceName: string): Re
   };
 }
 
-export function RecipeForm({ initialRecipe, onSave, saveLabel, pageTitle }: { initialRecipe?: Recipe; onSave: (recipe: Recipe) => Promise<void>; saveLabel: string; pageTitle?: string }) {
+export function RecipeForm({ initialRecipe, onSave, saveLabel, pageTitle, clarifications = [] }: {
+  initialRecipe?: Recipe; onSave: (recipe: Recipe) => Promise<void>; saveLabel: string; pageTitle?: string;
+  /** Questions from a photo import; each points at a line by its position in initialRecipe. */
+  clarifications?: Clarification[];
+}) {
   const { colors } = useManaTheme();
   const { t } = useTranslation();
   const language = usePreferences((state) => state.language);
@@ -47,6 +52,19 @@ export function RecipeForm({ initialRecipe, onSave, saveLabel, pageTitle }: { in
   const [imageUri, setImageUri] = useState(base.imageUri);
   const [busy, setBusy] = useState(false);
   const rtl = base.outputLanguage === 'he';
+  // Open questions, tied to the line's id so moving lines around keeps each answer on the right line.
+  const [questions, setQuestions] = useState(() => clarifications.map((item, key) => ({
+    key, item, lineId: item.target === 'ingredient' ? base.ingredients[item.index ?? -1]?.id : item.target === 'step' ? base.steps[item.index ?? -1]?.id : undefined,
+  })).filter((question) => question.item.target === 'title' || question.lineId));
+  const answer = (key: number, option: string | null) => {
+    const question = questions.find((entry) => entry.key === key);
+    setQuestions((current) => current.filter((entry) => entry.key !== key));
+    if (!question || option === null) return;
+    if (question.item.target === 'title') setTitle(option);
+    if (question.item.target === 'ingredient') setIngredients((current) => current.map((line) => line.id === question.lineId
+      ? { ...line, text: option, originalText: option === line.initialText ? line.originalText : null } : line));
+    if (question.item.target === 'step') setSteps((current) => current.map((step) => step.id === question.lineId ? { ...step, text: option } : step));
+  };
 
   const updateIngredient = (index: number, value: string) => setIngredients((current) => current.map((item, i) => i === index ? { ...item, text: value, originalText: value === item.initialText ? item.originalText : null } : item));
   const moveIngredient = (index: number, direction: -1 | 1) => setIngredients((current) => {
@@ -113,6 +131,8 @@ export function RecipeForm({ initialRecipe, onSave, saveLabel, pageTitle }: { in
       steps: steps.filter((step) => step.text.trim()).map((step) => ({ ...step, text: step.text.trim() })),
       category, tags: tags.split(',').map((tag) => tag.trim()).filter(Boolean).slice(0, 8),
       notes: notes.split('\n').map((note) => note.trim()).filter(Boolean), updatedAt: now,
+      // Questions left open stay on the recipe as "please check" notes.
+      warnings: [...base.warnings, ...openQuestionWarnings(questions.map((entry) => entry.item))].slice(0, 10),
     };
     setBusy(true);
     try { await onSave(recipe); }
@@ -126,6 +146,25 @@ export function RecipeForm({ initialRecipe, onSave, saveLabel, pageTitle }: { in
       {!!base.warnings.length && <View style={[styles.warning, { backgroundColor: colors.warningBg }]}>
         <Text style={[styles.warningTitle, { color: colors.warningText }]}>{t('checkDetails')}</Text>
         {base.warnings.map((warning, index) => <Text key={`${index}-${warning}`} style={[styles.warningText, { color: colors.warningText }]}>• {warning}</Text>)}
+      </View>}
+      {questions.length > 0 && <View style={[styles.clarify, { backgroundColor: colors.surface, borderColor: colors.accent }]}>
+        <View style={styles.clarifyHead}>
+          <Icon name="info" color={colors.accentText} size={18} />
+          <Text style={[styles.warningTitle, { color: colors.text }]}>{t('clarifyTitle')}</Text>
+        </View>
+        <Text style={[styles.clarifyIntro, { color: colors.muted }]}>{t('clarifyIntro')}</Text>
+        {questions.map(({ key, item }) => <View key={key} style={[styles.question, { borderTopColor: colors.line }]}>
+          <Text style={[styles.questionText, { color: colors.text }]}>{item.question}</Text>
+          <View style={styles.choices}>
+            {item.options.map((option) => <Pressable key={option} accessibilityRole="button" onPress={() => answer(key, option)}
+              style={({ pressed }) => [styles.choice, { backgroundColor: colors.primarySoft, opacity: pressed ? 0.8 : 1 }]}>
+              <Text style={[styles.choiceText, { color: colors.primaryText }]}>{option}</Text>
+            </Pressable>)}
+            <Pressable accessibilityRole="button" onPress={() => answer(key, null)} style={styles.keep}>
+              <Text style={[styles.keepText, { color: colors.muted }]}>{t('keepAsRead')}</Text>
+            </Pressable>
+          </View>
+        </View>)}
       </View>}
       <HeadsUp recipe={{ ingredients: ingredients.filter((item) => item.text.trim()).map((item) => parseIngredientLine(item.text)) }} />
 
@@ -194,7 +233,16 @@ export function RecipeForm({ initialRecipe, onSave, saveLabel, pageTitle }: { in
 }
 
 const styles = StyleSheet.create({
-  form: { gap: 18 }, pageTitle: { fontSize: 30, fontWeight: '700', letterSpacing: -0.8 },
+  form: { gap: 18 },
+  clarify: { borderWidth: 1.5, borderRadius: 16, padding: 14, gap: 8 },
+  clarifyHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  clarifyIntro: { fontSize: 13, lineHeight: 19 },
+  question: { borderTopWidth: 1, paddingTop: 10, marginTop: 4, gap: 8 },
+  questionText: { fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  choices: { gap: 8 },
+  choice: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, minHeight: 44, justifyContent: 'center' },
+  choiceText: { fontSize: 14, fontWeight: '600' },
+  keep: { minHeight: 40, justifyContent: 'center', alignSelf: 'flex-start' }, keepText: { fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' }, pageTitle: { fontSize: 30, fontWeight: '700', letterSpacing: -0.8 },
   photoWrap: { gap: 10 }, photo: { width: '100%', aspectRatio: 4 / 3, borderRadius: 16 }, photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   photoButton: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 22, paddingHorizontal: 14, minHeight: 44 }, photoButtonText: { fontSize: 13, fontWeight: '600' },
   photoEmpty: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 16, padding: 18, alignItems: 'center', gap: 6 }, photoEmptyIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },

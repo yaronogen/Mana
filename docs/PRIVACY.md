@@ -17,6 +17,8 @@ When a user submits a recipe link, the link and target language are sent to the 
 
 When a user sends a recipe to another Mana user, the app uploads that recipe (wording, quantities, times, attribution and a web photo URL if it has one; never ratings, cook notes, favorites or on-device photos) to the function, which stores it in `shared_recipes` under a random 10-character code with the anonymous creator id. The row expires after 90 days and expired rows are deleted when new links are created; each user may create 50 links per day. Anyone with the code can retrieve the recipe through the authenticated function. The recipient's app validates it with Zod and translates it with the normal `translate` action when the languages differ.
 
+For a photo import, the app shrinks 1–3 photos to at most 1600 px (JPEG) and sends them with the target language to the function's `photo` action, which counts one import and passes the images to the model provider; images are not stored or logged. For calorie estimates (`nutrition` action, own monthly allowance, never an import), only the saved recipe's formatted ingredient lines and servings are sent; the estimate is cached on the device (`recipe_nutrition`). Redeeming a tester code (`redeem` action) compares it with the `TESTER_CODE` server secret and records the plan in `account_plans`.
+
 The function does not log request bodies or provider response content. Supabase and the model provider may process operational metadata under their service terms. Configure and verify provider retention/training settings before production use, and include the resulting disclosure in the published privacy policy and Apple/Google privacy forms.
 
 ## Security boundaries and remaining release work

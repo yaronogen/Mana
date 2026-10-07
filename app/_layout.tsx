@@ -43,6 +43,7 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false, title: t('back') }} />
             <Stack.Screen name="add" options={{ title: '' }} />
             <Stack.Screen name="paste" options={{ title: '' }} />
+            <Stack.Screen name="photo-import" options={{ title: '' }} />
             <Stack.Screen name="editor" options={{ title: '' }} />
             <Stack.Screen name="import-review" options={{ title: '' }} />
             <Stack.Screen name="profile" options={{ title: '' }} />

@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { createRecipeAiProvider, ProviderUnavailableError } from '../_shared/recipeAiProvider.ts';
+import { createRecipeAiProvider, ProviderUnavailableError, type RecipePhotoInput } from '../_shared/recipeAiProvider.ts';
 import { fetchRecipePage, PageFetchError } from '../_shared/fetchRecipePage.ts';
 import { LANGUAGE_NAMES } from '../../../src/services/ai/prompts.ts';
 import {
@@ -18,6 +18,10 @@ const minPageTextCharacters = 120;
 
 const maxSharedRecipeCharacters = 60_000;
 const minCaptionCharacters = 30;
+// Photos arrive shrunk to 1600 px JPEG (a few hundred KB); these caps only stop abuse.
+const maxPhotos = 3;
+const maxPhotoCharacters = 4_000_000;
+const maxPhotosCharacters = 9_000_000;
 
 /** Ten random letters and digits for a share link (62^10 possibilities). */
 function shareCode(): string {
@@ -157,6 +161,29 @@ Deno.serve(async (request) => {
       if (quotaError) return json(503, { error: 'service_unavailable' });
       if (!allowed) return json(429, { error: 'nutrition_limit_reached' });
       return json(200, await createRecipeAiProvider().estimateNutrition(contentJson, targetLanguage));
+    }
+
+    // A recipe from 1–3 photos (handwritten, typed or printed). Counts as one import. Photos are never stored or logged.
+    if (body.action === 'photo') {
+      const images = (requestBody as { images?: unknown }).images;
+      if (!Array.isArray(images) || images.length < 1 || images.length > maxPhotos) return json(400, { error: 'invalid_request' });
+      const photos: RecipePhotoInput[] = [];
+      for (const image of images) {
+        const { mediaType, data } = (image ?? {}) as { mediaType?: unknown; data?: unknown };
+        if ((mediaType !== 'image/jpeg' && mediaType !== 'image/png' && mediaType !== 'image/webp') || typeof data !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(data)) {
+          return json(400, { error: 'invalid_request' });
+        }
+        if (data.length > maxPhotoCharacters) return json(413, { error: 'photo_too_large' });
+        photos.push({ mediaType, data });
+      }
+      if (photos.reduce((sum, photo) => sum + photo.data.length, 0) > maxPhotosCharacters) return json(413, { error: 'photo_too_large' });
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: allowed, error: quotaError } = await admin.rpc('consume_recipe_import', { p_user_id: user.id });
+      if (quotaError) return json(503, { error: 'service_unavailable' });
+      if (!allowed) return json(429, { error: 'daily_limit_reached' });
+      const result = await createRecipeAiProvider().extractFromImages(photos, targetLanguage);
+      if (!result.hasRecipe || !result.recipe || typeof result.recipe !== 'object') return json(422, { error: 'recipe_not_found' });
+      return json(200, { ...(result.recipe as Record<string, unknown>), imageUrl: null, clarifications: result.clarifications });
     }
 
     let pageUrl: string | null = null;

@@ -73,3 +73,17 @@ export function parseNutritionEstimate(recipe: Recipe, language: AppLanguage, pa
   if (!parsed.success) return null;
   return { ...parsed.data, recipeId: recipe.id, sourceFingerprint: nutritionFingerprint(recipe), language };
 }
+
+/** A question the photo reader asks about a line it couldn't read or understand (see src/domain/clarifications.ts). */
+export const clarificationSchema = z.object({
+  target: z.enum(['title', 'ingredient', 'step']),
+  index: z.number().int().nonnegative().nullable(),
+  question: z.string().trim().min(1).max(300),
+  options: z.array(z.string().trim().min(1).max(300)).min(2).max(4),
+});
+
+/** A recipe read from photos: the usual draft, plus the few questions the reader couldn't settle itself. */
+export const photoRecipeSchema = recipeDraftSchema.extend({
+  // A malformed question list never blocks the recipe; it is simply dropped.
+  clarifications: z.array(clarificationSchema).max(10).catch([]).default([]),
+});

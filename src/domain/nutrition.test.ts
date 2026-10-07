@@ -19,7 +19,8 @@ describe('calorie estimates', () => {
 
   it('stays valid after a photo, favorite or rating, and goes stale when ingredients or servings change', () => {
     const fingerprint = nutritionFingerprint(recipe);
-    expect(nutritionFingerprint({ ...recipe, favorite: true, rating: 5, imageUri: 'file:///x.jpg', title: 'Altro' })).toBe(fingerprint);
+    const decorated: Recipe = { ...recipe, favorite: true, rating: 5, imageUri: 'file:///x.jpg', title: 'Altro' };
+    expect(nutritionFingerprint(decorated)).toBe(fingerprint);
     expect(nutritionFingerprint({ ...recipe, servings: 2 })).not.toBe(fingerprint);
     expect(nutritionFingerprint({ ...recipe, ingredients: [...recipe.ingredients, parseIngredientLine('50 g di parmigiano')] })).not.toBe(fingerprint);
   });

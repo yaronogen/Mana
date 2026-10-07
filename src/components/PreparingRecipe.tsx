@@ -10,7 +10,7 @@ import { Screen } from './Screen';
 // imports pass it, and the last step stays open until the result arrives.
 const STEP_DONE_AFTER_MS = [1500, 4500, 9000];
 
-export function PreparingRecipe({ fromLink }: { fromLink: boolean }) {
+export function PreparingRecipe({ fromLink, fromPhotos = false }: { fromLink: boolean; fromPhotos?: boolean }) {
   const { colors } = useManaTheme();
   const { t } = useTranslation();
   const [done, setDone] = useState(0);
@@ -18,12 +18,12 @@ export function PreparingRecipe({ fromLink }: { fromLink: boolean }) {
     const timers = STEP_DONE_AFTER_MS.map((delay, index) => setTimeout(() => setDone(index + 1), delay));
     return () => timers.forEach(clearTimeout);
   }, []);
-  const steps = [fromLink ? t('stepReadingPage') : t('stepReadingText'), t('stepExtracting'), t('stepCleaning'), t('stepTranslating')];
+  const steps = [fromPhotos ? t('stepReadingPhotos') : fromLink ? t('stepReadingPage') : t('stepReadingText'), t('stepExtracting'), t('stepCleaning'), t('stepTranslating')];
   return (
     <Screen contentStyle={styles.container}>
       <View style={[styles.ring, { borderColor: colors.primarySoft }]}><ActivityIndicator size="large" color={colors.primaryText} /></View>
       <Text style={[styles.title, { color: colors.text }]}>{t('preparing')}</Text>
-      <Text style={[styles.body, { color: colors.muted }]}>{fromLink ? t('readingPageNote') : t('processingNote')}</Text>
+      <Text style={[styles.body, { color: colors.muted }]}>{fromPhotos ? t('readingPhotosNote') : fromLink ? t('readingPageNote') : t('processingNote')}</Text>
       <View style={[styles.list, { backgroundColor: colors.surface, borderColor: colors.line }]}>
         {steps.map((label, index) => {
           const complete = index < done;
