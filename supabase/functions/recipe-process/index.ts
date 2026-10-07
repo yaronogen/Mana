@@ -1,4 +1,5 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Pinned npm package (not the esm.sh CDN, whose newest build failed to bundle); same version as the app.
+import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
 import { createRecipeAiProvider, ProviderUnavailableError, type RecipePhotoInput } from '../_shared/recipeAiProvider.ts';
 import { fetchRecipePage, PageFetchError } from '../_shared/fetchRecipePage.ts';
 import { LANGUAGE_NAMES } from '../../../src/services/ai/prompts.ts';
