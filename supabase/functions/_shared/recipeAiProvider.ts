@@ -105,9 +105,9 @@ class ClaudeRecipeProvider implements RecipeAiProvider {
       throw error;
     }
     if (response.stop_reason === 'refusal' || response.stop_reason === 'max_tokens') throw new ProviderUnavailableError(`provider_${response.stop_reason}`);
-    const content = response.content.find((block) => block.type === 'text')?.text;
-    if (typeof content !== 'string') throw new ProviderUnavailableError('invalid_provider_response');
-    return JSON.parse(content) as unknown;
+    const output = response.content.find((block) => block.type === 'text')?.text;
+    if (typeof output !== 'string') throw new ProviderUnavailableError('invalid_provider_response');
+    return JSON.parse(output) as unknown;
   }
 }
 
